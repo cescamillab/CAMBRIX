@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - Cambri</title>
+</head>
+<body>
+    <h1>Bienvenido {{ session['username'] }}</h1>
+
+    {% if rol == 'jefe' %}
+        <h3>Panel de Jefe</h3>
+        <p>Puedes gestionar pedidos, inventario y producción.</p>
+    {% elif rol == 'empleado' %}
+        <h3>Panel de Empleado</h3>
+        <p>Puedes ver tus pedidos asignados.</p>
+    {% endif %}
+
+    <a href="{{ url_for('auth.logout') }}">Cerrar sesión</a>
+
+</body>
+</html>
