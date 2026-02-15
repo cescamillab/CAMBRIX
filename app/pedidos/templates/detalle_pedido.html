@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Detalle del Pedido</h2>
+
+<p><strong>ID:</strong> {{ pedido.id }}</p>
+<p><strong>Cliente:</strong> {{ pedido.cliente_nombre }}</p>
+<p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
+<p><strong>Correo:</strong> {{ pedido.correo }}</p>
+
+<hr>
+
+<p><strong>Descripción:</strong> {{ pedido.descripcion }}</p>
+<p><strong>Estado:</strong> {{ pedido.estado }}</p>
+<p><strong>Fecha creación:</strong> {{ pedido.fecha_creacion }}</p>
+<p><strong>Fecha entrega:</strong> {{ pedido.fecha_entrega }}</p>
+
+<hr>
+
+<p><strong>Valor total:</strong> {{ pedido.valor_total }}</p>
+<p><strong>Anticipo:</strong> {{ pedido.anticipo }}</p>
+<p><strong>Saldo:</strong> {{ pedido.saldo }}</p>
+
+<hr>
+
+<p><strong>Responsable:</strong> {{ pedido.responsable_nombre }}</p>
+<br>
+{% if session['rol'] == 'jefe' and pedido.estado != 'terminado' %}
+    <a href="{{ url_for('pedidos.editar_pedido', pedido_id=pedido.id) }}">
+        Editar Pedido
+    </a>
+{% endif %}
+<br>
+{% if session['rol'] == 'jefe' %}
+<form method="POST" action="{{ url_for('pedidos.eliminar_pedido', pedido_id=pedido.id) }}">
+    <button type="submit" onclick="return confirm('¿Eliminar este pedido?')">
+        Eliminar Pedido
+    </button>
+</form>
+{% endif %}
+
+<br>
+<a href="{{ url_for('pedidos.listar_pedidos') }}">Volver</a>
+
+{% endblock %}
