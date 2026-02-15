@@ -1,0 +1,41 @@
+<h2>Lista de Pedidos</h2>
+
+{% if session['rol'] == 'jefe' %}
+    <a href="{{ url_for('pedidos.crear_pedido') }}">Crear Pedido</a>
+{% endif %}
+
+<p>Aquí se listarán los pedidos...</p>
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Cliente</th>
+        <th>Descripción</th>
+        <th>Estado</th>
+        <th>Responsable</th>
+        <th>Fecha Entrega</th>
+        <th>Valor Total</th>
+        <th>Anticipo</th>
+    </tr>
+
+    {% for pedido in pedidos %}
+    <tr>
+        <td>{{ pedido.id }}</td>
+        <td>{{ pedido.cliente_nombre }}</td>
+        <td>{{ pedido.descripcion }}</td>
+        <td>{{ pedido.estado }}</td>
+        <td>
+            {% if pedido.responsable_nombre %}
+                {{ pedido.responsable_nombre }}
+            {% else %}
+                Sin asignar
+            {% endif %}
+        </td>
+        <td>{{ pedido.fecha_entrega }}</td>
+        <td>{{ pedido.valor_total }}</td>
+        <td>{{ pedido.anticipo }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<a href="{{ url_for('dashboard.home') }}">Volver al Dashboard</a>

@@ -1,0 +1,73 @@
+<h2>Crear Pedido</h2>
+
+<form method="POST">
+
+    <label>Tipo de cliente:</label>
+    <select name="tipo_cliente" id="tipo_cliente" onchange="toggleCliente()">
+        <option value="existente">Cliente existente</option>
+        <option value="nuevo">Cliente nuevo</option>
+    </select>
+
+    <div id="cliente_existente_div">
+        <label>Seleccionar cliente:</label>
+        <select name="cliente_existente">
+            {% for cliente in clientes %}
+                <option value="{{ cliente.id }}">{{ cliente.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div id="cliente_nuevo_div" style="display:none;">
+        <label>Nombre:</label>
+        <input type="text" name="nombre">
+
+        <label>Teléfono:</label>
+        <input type="text" name="telefono">
+
+        <label>Correo:</label>
+        <input type="email" name="correo">
+    </div>
+
+    <label>Descripción:</label>
+    <textarea name="descripcion" required></textarea>
+
+    <label>Fecha entrega:</label>
+    <input type="date" name="fecha_entrega">
+
+    <label>Valor total:</label>
+    <input type="number" step="0.01" name="valor_total">
+
+    <label>Anticipo:</label>
+    <input type="number" step="0.01" name="anticipo">
+
+    <label>Asignar a empleado:</label>
+    <select name="responsable_id" required>
+        {% for empleado in empleados %}
+            <option value="{{ empleado.id }}">
+                {{ empleado.username }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <br>
+    <button type="submit">Crear Pedido</button>
+
+</form>
+
+<script>
+function toggleCliente() {
+    var tipo = document.getElementById("tipo_cliente").value;
+    var existente = document.getElementById("cliente_existente_div");
+    var nuevo = document.getElementById("cliente_nuevo_div");
+
+    if (tipo === "nuevo") {
+        existente.style.display = "none";
+        nuevo.style.display = "block";
+    } else {
+        existente.style.display = "block";
+        nuevo.style.display = "none";
+    }
+}
+</script>
+
+<a href="{{ url_for('pedidos.listar_pedidos') }}">Volver</a>

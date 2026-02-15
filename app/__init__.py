@@ -8,9 +8,11 @@ def create_app():
     # Registrar Blueprints
     from .auth.routes import auth_bp
     from .dashboard.routes import dashboard_bp
+    from .pedidos.routes import pedidos_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(pedidos_bp)
 
     @app.after_request
     def add_header(response):
