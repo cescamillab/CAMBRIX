@@ -31,34 +31,52 @@ def listar_pedidos():
     connection = get_connection()
     cursor = connection.cursor(dictionary=True)
 
-    if session.get("rol") == "jefe":
-        cursor.execute("""
-            SELECT pedidos.*, clientes.nombre AS cliente_nombre,
-            usuarios.nombre AS responsable_nombre,
-            (pedidos.valor_total - pedidos.anticipo) AS saldo
-            FROM pedidos
-            JOIN clientes ON pedidos.cliente_id = clientes.id
-            LEFT JOIN usuarios ON pedidos.responsable_id = usuarios.id
-            ORDER BY pedidos.fecha_creacion DESC
-        """)
-    else:
-        cursor.execute("""
-            SELECT pedidos.*, clientes.nombre AS cliente_nombre,
-            usuarios.nombre AS responsable_nombre,
-            (pedidos.valor_total - pedidos.anticipo) AS saldo
-            FROM pedidos
-            JOIN clientes ON pedidos.cliente_id = clientes.id
-            LEFT JOIN usuarios ON pedidos.responsable_id = usuarios.id
-            WHERE pedidos.responsable_id = %s
-            ORDER BY pedidos.fecha_creacion DESC
-        """, (session.get("user_id"),))
+    # Obtener filtros desde la URL
+    busqueda = request.args.get("busqueda", "")
+    estado = request.args.get("estado", "")
 
+    # Query base
+    query = """
+        SELECT pedidos.*, clientes.nombre AS cliente_nombre,
+        usuarios.nombre AS responsable_nombre,
+        (pedidos.valor_total - pedidos.anticipo) AS saldo
+        FROM pedidos
+        JOIN clientes ON pedidos.cliente_id = clientes.id
+        LEFT JOIN usuarios ON pedidos.responsable_id = usuarios.id
+        WHERE 1=1
+    """
+
+    params = []
+
+    # Si no es jefe, solo ve sus pedidos
+    if session.get("rol") != "jefe":
+        query += " AND pedidos.responsable_id = %s"
+        params.append(session.get("user_id"))
+
+    # Filtro por búsqueda de cliente
+    if busqueda:
+        query += " AND clientes.nombre LIKE %s"
+        params.append(f"%{busqueda}%")
+
+    # Filtro por estado
+    if estado:
+        query += " AND pedidos.estado = %s"
+        params.append(estado)
+
+    query += " ORDER BY pedidos.fecha_creacion DESC"
+
+    cursor.execute(query, params)
     pedidos = cursor.fetchall()
 
     cursor.close()
     connection.close()
 
-    return render_template("lista_pedidos.html", pedidos=pedidos)
+    return render_template(
+        "lista_pedidos.html",
+        pedidos=pedidos,
+        busqueda=busqueda,
+        estado=estado
+    )
 
 
 # CREAR PEDIDO (solo jefe)

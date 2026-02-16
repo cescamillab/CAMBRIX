@@ -1,105 +1,67 @@
+{% extends "base.html" %}
 
-    {% extends "base.html" %}   
+{% block content %}
 
-    {% block content %}
+<h2 class="mb-4">Dashboard</h2>
 
+<div class="row">
 
-    <h1>Bienvenido {{ session['username'] }}</h1>
-    <h2 class="mb-4">Dashboard</h2>
-    
-    <h3>Resumen de Pedidos</h3>
-
-    <div class="row">
-
-        <div class="col-md-3">
-            <div class="card text-white bg-dark mb-3">
-                <div class="card-body">
-                    <h5>Total Pedidos</h5>
-                    <h3>{{ total }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card text-dark bg-warning mb-3">
-                <div class="card-body">
-                    <h5>Pendientes</h5>
-                    <h3>{{ pendientes }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card text-white bg-primary mb-3">
-                <div class="card-body">
-                    <h5>En Proceso</h5>
-                    <h3>{{ en_proceso }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card text-white bg-success mb-3">
-                <div class="card-body">
-                    <h5>Terminados</h5>
-                    <h3>{{ terminados }}</h3>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5>Total Facturado</h5>
-                    <h3>${{ total_facturado }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5>Total Pendiente</h5>
-                    <h3>${{ total_pendiente }}</h3>
-                </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-dark mb-3">
+            <div class="card-body">
+                <h5>Total Pedidos</h5>
+                <h3>{{ total }}</h3>
             </div>
         </div>
     </div>
 
-    <ul>
-        <li>Total pedidos: {{ total }}</li> 
-        <li>Pendientes: {{ pendientes }}</li>
-        <li>En proceso: {{ en_proceso }}</li>
-        <li>Terminados: {{ terminados }}</li>
-    </ul>
+    <div class="col-md-3">
+        <div class="card text-dark bg-warning mb-3">
+            <div class="card-body">
+                <h5>Pendientes</h5>
+                <h3>{{ pendientes }}</h3>
+            </div>
+        </div>
+    </div>
 
-    <h3>Resumen Financiero</h3>
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5>En Proceso</h5>
+                <h3>{{ en_proceso }}</h3>
+            </div>
+        </div>
+    </div>
 
-    <ul>
-        <li>Total facturado: {{ total_facturado }}</li>
-        <li>Total pendiente: {{ total_pendiente }}</li>
-    </ul>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5>Terminados</h5>
+                <h3>{{ terminados }}</h3>
+            </div>
+        </div>
+    </div>
 
-    {% if rol == 'jefe' %}
-        <h3>Panel de Jefe</h3>
-        <p>Puedes gestionar pedidos, inventario y producción.</p>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
         <div class="card">
-            <a class="btn btn-primary" href="{{ url_for('pedidos.listar_pedidos') }}">
-                Gestionar pedidos
-            </a>
+            <div class="card-body">
+                <h5>Total Facturado</h5>
+                <h3>${{ total_facturado }}</h3>
+            </div>
         </div>
-    {% elif rol == 'empleado' %}
-        <h3>Panel de Empleado</h3>
-        <p>Puedes ver tus pedidos asignados.</p>
-        <a href="{{ url_for('pedidos.listar_pedidos') }}">
-            Ver Mis Pedidos
-        </a>
-    {% endif %}
+    </div>
 
-    <br><br>
-    <a href="{{ url_for('auth.logout') }}">Cerrar sesión</a>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5>Total Pendiente</h5>
+                <h3>${{ total_pendiente }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
 
-    {% endblock %}
+{% endblock %}
