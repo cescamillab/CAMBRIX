@@ -2,45 +2,86 @@
 
 {% block content %}
 
-<h2>Detalle del Pedido</h2>
+<div class="card shadow-sm">
+    <div class="card-header bg-dark text-white">
+        <h4 class="mb-0">Detalle del Pedido #{{ pedido.id }}</h4>
+    </div>
 
-<p><strong>ID:</strong> {{ pedido.id }}</p>
-<p><strong>Cliente:</strong> {{ pedido.cliente_nombre }}</p>
-<p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
-<p><strong>Correo:</strong> {{ pedido.correo }}</p>
+    <div class="card-body">
 
-<hr>
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Información del Cliente</h5>
+                <p><strong>Nombre:</strong> {{ pedido.cliente_nombre }}</p>
+                <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
+                <p><strong>Correo:</strong> {{ pedido.correo }}</p>
+            </div>
 
-<p><strong>Descripción:</strong> {{ pedido.descripcion }}</p>
-<p><strong>Estado:</strong> {{ pedido.estado }}</p>
-<p><strong>Fecha creación:</strong> {{ pedido.fecha_creacion }}</p>
-<p><strong>Fecha entrega:</strong> {{ pedido.fecha_entrega }}</p>
+            <div class="col-md-6">
+                <h5>Información del Pedido</h5>
+                <p><strong>Estado:</strong> 
+                    <span class="badge bg-info">{{ pedido.estado }}</span>
+                </p>
+                <p><strong>Fecha creación:</strong> {{ pedido.fecha_creacion }}</p>
+                <p><strong>Fecha entrega:</strong> {{ pedido.fecha_entrega }}</p>
+                <p><strong>Responsable:</strong> {{ pedido.responsable_nombre }}</p>
+            </div>
+        </div>
 
-<hr>
+        <hr>
 
-<p><strong>Valor total:</strong> {{ pedido.valor_total }}</p>
-<p><strong>Anticipo:</strong> {{ pedido.anticipo }}</p>
-<p><strong>Saldo:</strong> {{ pedido.saldo }}</p>
+        <h5>Descripción</h5>
+        <p>{{ pedido.descripcion }}</p>
 
-<hr>
+        <hr>
 
-<p><strong>Responsable:</strong> {{ pedido.responsable_nombre }}</p>
-<br>
-{% if session['rol'] == 'jefe' and pedido.estado != 'terminado' %}
-    <a href="{{ url_for('pedidos.editar_pedido', pedido_id=pedido.id) }}">
-        Editar Pedido
-    </a>
-{% endif %}
-<br>
-{% if session['rol'] == 'jefe' %}
-<form method="POST" action="{{ url_for('pedidos.eliminar_pedido', pedido_id=pedido.id) }}">
-    <button type="submit" onclick="return confirm('¿Eliminar este pedido?')">
-        Eliminar Pedido
-    </button>
-</form>
-{% endif %}
+        <h5>Información Financiera</h5>
+        <p><strong>Valor total:</strong> ${{ pedido.valor_total }}</p>
+        <p><strong>Anticipo:</strong> ${{ pedido.anticipo }}</p>
+        <p><strong>Saldo:</strong> ${{ pedido.saldo }}</p>
 
-<br>
-<a href="{{ url_for('pedidos.listar_pedidos') }}">Volver</a>
+    </div>
+
+    <div class="card-footer d-flex justify-content-between">
+
+        <div>
+            <a href="{{ url_for('pedidos.listar_pedidos') }}" 
+               class="btn btn-secondary btn-sm">
+               Volver
+            </a>
+        </div>
+
+        <div>
+
+            {% if pedido.estado != 'terminado' %}
+                <a href="{{ url_for('produccion.gestionar_produccion', pedido_id=pedido.id) }}"
+                   class="btn btn-warning btn-sm">
+                   Gestionar Producción
+                </a>
+            {% endif %}
+
+            {% if session['rol'] == 'jefe' and pedido.estado != 'terminado' %}
+                <a href="{{ url_for('pedidos.editar_pedido', pedido_id=pedido.id) }}"
+                   class="btn btn-primary btn-sm">
+                   Editar
+                </a>
+            {% endif %}
+
+            {% if session['rol'] == 'jefe' %}
+                <form method="POST"
+                      action="{{ url_for('pedidos.eliminar_pedido', pedido_id=pedido.id) }}"
+                      style="display:inline;">
+                    <button type="submit"
+                            class="btn btn-danger btn-sm"
+                            onclick="return confirm('¿Eliminar este pedido?')">
+                        Eliminar
+                    </button>
+                </form>
+            {% endif %}
+
+        </div>
+
+    </div>
+</div>
 
 {% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex justify-content-between mb-3">
+    <h2>Inventario</h2>
+
+    {% if session["rol"] == "jefe" %}
+    <a href="{{ url_for('inventarios.crear_material') }}"
+       class="btn btn-primary">
+       Nuevo Material
+    </a>
+    {% endif %}
+</div>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Stock</th>
+            <th>Mínimo</th>
+            <th>Costo</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in materiales %}
+        <tr>
+            <td>{{ m.nombre }}</td>
+            <td>{{ m.categoria }}</td>
+            <td>{{ m.stock_actual }} {{ m.unidad_medida }}</td>
+            <td>{{ m.stock_minimo }}</td>
+            <td>${{ m.costo_unitario }}</td>
+            <td>
+                {% if session["rol"] == "jefe" %}
+                <a href="{{ url_for('inventarios.editar_material', id=m.id) }}"
+                   class="btn btn-sm btn-warning">Editar</a>
+
+                <a href="{{ url_for('inventarios.eliminar_material', id=m.id) }}"
+                   class="btn btn-sm btn-danger">Eliminar</a>
+
+                <a href="{{ url_for('inventarios.registrar_movimiento', material_id=m.id) }}"
+                    class="btn btn-sm btn-info">Movimiento</a>   
+                
+                <a href="{{ url_for('inventarios.historial_material', material_id=m.id) }}"
+                    class="btn btn-sm btn-dark">Historial</a>
+
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
