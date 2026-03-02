@@ -16,7 +16,13 @@ def home():
     connection = get_connection()
     cursor = connection.cursor(dictionary=True)
 
-    if session.get("rol") == "jefe":
+    rol = session.get("rol")
+
+    # =========================
+    # MÉTRICAS PRINCIPALES
+    # =========================
+
+    if rol == "jefe":
 
         cursor.execute("SELECT COUNT(*) AS total FROM pedidos")
         total = cursor.fetchone()["total"]
@@ -35,6 +41,26 @@ def home():
 
         cursor.execute("SELECT SUM(valor_total - anticipo) AS total_pendiente FROM pedidos")
         total_pendiente = cursor.fetchone()["total_pendiente"] or 0
+
+        # =========================
+        # DATOS PARA GRÁFICAS
+        # =========================
+
+        cursor.execute("""
+            SELECT estado, COUNT(*) as total
+            FROM pedidos
+            GROUP BY estado
+        """)
+        estados = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT DATE_FORMAT(fecha_creacion, '%Y-%m') as mes,
+                   SUM(valor_total) as total_mes
+            FROM pedidos
+            GROUP BY mes
+            ORDER BY mes
+        """)
+        ingresos = cursor.fetchall()
 
     else:
         user_id = session.get("user_id")
@@ -57,9 +83,30 @@ def home():
         cursor.execute("SELECT SUM(valor_total - anticipo) AS total_pendiente FROM pedidos WHERE responsable_id = %s", (user_id,))
         total_pendiente = cursor.fetchone()["total_pendiente"] or 0
 
+        # =========================
+        # GRÁFICAS SOLO DE SUS PEDIDOS
+        # =========================
+
+        cursor.execute("""
+            SELECT estado, COUNT(*) as total
+            FROM pedidos
+            WHERE responsable_id = %s
+            GROUP BY estado
+        """, (user_id,))
+        estados = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT DATE_FORMAT(fecha_creacion, '%Y-%m') as mes,
+                   SUM(valor_total) as total_mes
+            FROM pedidos
+            WHERE responsable_id = %s
+            GROUP BY mes
+            ORDER BY mes
+        """, (user_id,))
+        ingresos = cursor.fetchall()
+
     cursor.close()
     connection.close()
-    rol = session.get("rol")
 
     return render_template(
         "dashboard.html",
@@ -69,5 +116,7 @@ def home():
         terminados=terminados,
         total_facturado=total_facturado,
         total_pendiente=total_pendiente,
-        rol=rol
+        rol=rol,
+        estados=estados,
+        ingresos=ingresos
     )

@@ -26,7 +26,25 @@
         <option value="terminado" {% if estado == 'terminado' %}selected{% endif %}>Terminado</option>
     </select>
 
+    {% if session.get("rol") == "jefe" %}
+    <!-- Filtro por responsable -->
+    <select name="responsable">
+        <option value="">Todos los responsables</option>
+        {% for emp in empleados %}
+            <option value="{{ emp.id }}"
+                {% if responsable == emp.id|string %}selected{% endif %}>
+                {{ emp.nombre }}
+            </option>
+        {% endfor %}
+    </select>
+    {% endif %}
+
     <button type="submit">Filtrar</button>
+
+    <!-- Botón limpiar -->
+    <a href="{{ url_for('pedidos.listar_pedidos') }}">
+        <button type="button">Limpiar filtros</button>
+    </a>
 </form>
 
 

@@ -34,6 +34,7 @@ def listar_pedidos():
     # Obtener filtros desde la URL
     busqueda = request.args.get("busqueda", "")
     estado = request.args.get("estado", "")
+    responsable = request.args.get("responsable","")
 
     # Query base
     query = """
@@ -63,10 +64,21 @@ def listar_pedidos():
         query += " AND pedidos.estado = %s"
         params.append(estado)
 
+    # Filtro por responsable (solo jefe puede usarlo)
+    if responsable and session.get("rol") == "jefe":
+        query += " AND pedidos.responsable_id = %s"
+        params.append(responsable)
+
     query += " ORDER BY pedidos.fecha_creacion DESC"
 
     cursor.execute(query, params)
     pedidos = cursor.fetchall()
+
+    # Obtener lista de empleados para el filtro
+    empleados = []
+    if session.get("rol") == "jefe":
+        cursor.execute("SELECT id, nombre FROM usuarios WHERE rol = 'empleado'")
+        empleados = cursor.fetchall()
 
     cursor.close()
     connection.close()
@@ -75,7 +87,9 @@ def listar_pedidos():
         "lista_pedidos.html",
         pedidos=pedidos,
         busqueda=busqueda,
-        estado=estado
+        estado=estado,
+        responsable=responsable,
+        empleados=empleados
     )
 
 

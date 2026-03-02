@@ -64,4 +64,83 @@
     </div>
 </div>
 
+<!-- ========================= -->
+<!-- GRÁFICAS -->
+<!-- ========================= -->
+
+<div class="row mt-5">
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5>Distribución de Estados</h5>
+                <canvas id="graficaEstados"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5>Ingresos Mensuales</h5>
+                <canvas id="graficaIngresos"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ========================= -->
+<!-- CHART JS -->
+<!-- ========================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+    // ====== DATOS DESDE FLASK ======
+    const estadosData = {{ estados | tojson }};
+    const ingresosData = {{ ingresos | tojson }};
+
+    // ====== PROCESAR ESTADOS ======
+    const estadosLabels = estadosData.map(e => e.estado);
+    const estadosValores = estadosData.map(e => e.total);
+
+    new Chart(document.getElementById('graficaEstados'), {
+        type: 'pie',
+        data: {
+            labels: estadosLabels,
+            datasets: [{
+                data: estadosValores,
+                backgroundColor: [
+                    '#198754',
+                    '#ffc107',
+                    '#0d6efd',
+                    '#6c757d'
+                ]
+            }]
+        }
+    });
+
+    // ====== PROCESAR INGRESOS ======
+    const meses = ingresosData.map(i => i.mes);
+    const valores = ingresosData.map(i => i.total_mes);
+
+    new Chart(document.getElementById('graficaIngresos'), {
+        type: 'line',
+        data: {
+            labels: meses,
+            datasets: [{
+                label: 'Ingresos',
+                data: valores,
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13,110,253,0.2)',
+                fill: true,
+                tension: 0.3
+            }]
+        }
+    });
+
+</script>
+
 {% endblock %}

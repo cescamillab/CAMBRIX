@@ -1,2 +1,5 @@
-pip install python-dotenv
+pip install flask
 
+pip install flask-login
+pip install mysql-connector-python
+pip install python-dotenv
