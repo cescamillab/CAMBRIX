@@ -19,7 +19,20 @@ def home():
     rol = session.get("rol")
 
     # =========================
-    # MÉTRICAS PRINCIPALES
+    # ALERTAS DE INVENTARIO
+    # =========================
+
+    cursor.execute("""
+        SELECT nombre, stock_actual, stock_minimo
+        FROM materiales
+        WHERE stock_actual <= stock_minimo
+        ORDER BY stock_actual ASC
+    """)
+
+    materiales_bajos = cursor.fetchall()
+
+    # =========================
+    # MÉTRICAS
     # =========================
 
     if rol == "jefe":
@@ -42,10 +55,6 @@ def home():
         cursor.execute("SELECT SUM(valor_total - anticipo) AS total_pendiente FROM pedidos")
         total_pendiente = cursor.fetchone()["total_pendiente"] or 0
 
-        # =========================
-        # DATOS PARA GRÁFICAS
-        # =========================
-
         cursor.execute("""
             SELECT estado, COUNT(*) as total
             FROM pedidos
@@ -63,6 +72,7 @@ def home():
         ingresos = cursor.fetchall()
 
     else:
+
         user_id = session.get("user_id")
 
         cursor.execute("SELECT COUNT(*) AS total FROM pedidos WHERE responsable_id = %s", (user_id,))
@@ -82,10 +92,6 @@ def home():
 
         cursor.execute("SELECT SUM(valor_total - anticipo) AS total_pendiente FROM pedidos WHERE responsable_id = %s", (user_id,))
         total_pendiente = cursor.fetchone()["total_pendiente"] or 0
-
-        # =========================
-        # GRÁFICAS SOLO DE SUS PEDIDOS
-        # =========================
 
         cursor.execute("""
             SELECT estado, COUNT(*) as total
@@ -118,5 +124,6 @@ def home():
         total_pendiente=total_pendiente,
         rol=rol,
         estados=estados,
-        ingresos=ingresos
+        ingresos=ingresos,
+        materiales_bajos=materiales_bajos
     )

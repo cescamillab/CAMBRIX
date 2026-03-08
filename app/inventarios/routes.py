@@ -19,14 +19,25 @@ def listar_materiales():
     conexion = get_connection()
     cursor = conexion.cursor(dictionary=True)
 
+    # Obtener materiales
     cursor.execute("SELECT * FROM materiales ORDER BY nombre")
     materiales = cursor.fetchall()
 
+    # Contar materiales con stock bajo
+    cursor.execute("""
+        SELECT COUNT(*) AS bajos
+        FROM materiales
+        WHERE stock_actual <= stock_minimo
+    """)
+    alerta_stock = cursor.fetchone()
+
     conexion.close()
 
-    return render_template("lista_materiales.html",
-                           materiales=materiales)
-
+    return render_template(
+        "lista_materiales.html",
+        materiales=materiales,
+        alerta_stock=alerta_stock
+    )
 
 # =========================
 # CREAR MATERIAL (SOLO JEFE)
@@ -96,7 +107,7 @@ def editar_material(id):
                 stock_minimo=%s,
                 costo_unitario=%s
             WHERE id=%s
-        """, (nombre, categoria, unidad, stock, stock_minimo, costo, id))
+        """, (nombre, categoria, unidad, stock_minimo, costo, id))
 
         conexion.commit()
         conexion.close()

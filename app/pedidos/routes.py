@@ -210,6 +210,7 @@ def detalle_pedido(pedido_id):
     connection = get_connection()
     cursor = connection.cursor(dictionary=True)
 
+    # Obtener pedido
     cursor.execute("""
         SELECT 
             pedidos.*, 
@@ -231,18 +232,31 @@ def detalle_pedido(pedido_id):
         connection.close()
         abort(404)
 
-    # Si es empleado, solo puede ver los suyos
+    # Control de permisos
     if session.get("rol") == "empleado":
         if pedido["responsable_id"] != session.get("user_id"):
             cursor.close()
             connection.close()
             abort(403)
 
+    # Obtener materiales usados en producción
+    cursor.execute("""
+        SELECT pm.*, m.nombre
+        FROM produccion_materiales pm
+        JOIN materiales m ON pm.material_id = m.id
+        WHERE pm.pedido_id = %s
+    """, (pedido_id,))
+
+    produccion = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
-    return render_template("detalle_pedido.html", pedido=pedido)
-
+    return render_template(
+        "detalle_pedido.html",
+        pedido=pedido,
+        produccion=produccion
+    )
 
 @pedidos_bp.route("/editar/<int:pedido_id>", methods=["GET", "POST"])
 @login_required

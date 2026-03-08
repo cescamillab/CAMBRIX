@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from app.db import get_connection
 from app.utils import login_required
 
@@ -21,8 +21,9 @@ def gestionar_produccion(pedido_id):
     # Obtener pedido
     cursor.execute("SELECT * FROM pedidos WHERE id=%s", (pedido_id,))
     pedido = cursor.fetchone()
-    
+
     if not pedido:
+        conexion.close()
         return "Pedido no encontrado", 404
 
     # Si está pendiente → cambiar a en_proceso
@@ -33,11 +34,10 @@ def gestionar_produccion(pedido_id):
         )
         conexion.commit()
 
-        # Volvemos a consultar para tener estado actualizado
         cursor.execute("SELECT * FROM pedidos WHERE id = %s", (pedido_id,))
         pedido = cursor.fetchone()
 
-    # Obtener materiales disponibles
+    # Obtener materiales
     cursor.execute("SELECT * FROM materiales ORDER BY nombre")
     materiales = cursor.fetchall()
 
@@ -46,13 +46,18 @@ def gestionar_produccion(pedido_id):
         material_id = request.form["material_id"]
         cantidad = float(request.form["cantidad"])
 
-        # Obtener material seleccionado
         cursor.execute("SELECT * FROM materiales WHERE id=%s", (material_id,))
         material = cursor.fetchone()
 
+        if not material:
+            conexion.close()
+            flash("Material no encontrado", "danger")
+            return redirect(url_for("produccion.gestionar_produccion", pedido_id=pedido_id))
+
         if cantidad > float(material["stock_actual"]):
             conexion.close()
-            return "Stock insuficiente"
+            flash("Stock insuficiente para este material", "danger")
+            return redirect(url_for("produccion.gestionar_produccion", pedido_id=pedido_id))
 
         costo_unitario = float(material["costo_unitario"])
         costo_total = costo_unitario * cantidad
@@ -64,29 +69,35 @@ def gestionar_produccion(pedido_id):
             VALUES (%s, %s, %s, %s, %s)
         """, (pedido_id, material_id, cantidad, costo_unitario, costo_total))
 
-        # Registrar movimiento inventario
+        # Movimiento inventario
         cursor.execute("""
             INSERT INTO movimientos_inventario
             (material_id, tipo, cantidad, motivo, pedido_id)
             VALUES (%s, 'salida', %s, %s, %s)
-        """, (material_id, cantidad,
-              f"Producción Pedido #{pedido_id}", pedido_id))
+        """, (material_id, cantidad, f"Producción Pedido #{pedido_id}", pedido_id))
 
         # Actualizar stock
         nuevo_stock = float(material["stock_actual"]) - cantidad
+
         cursor.execute("""
             UPDATE materiales
             SET stock_actual=%s
             WHERE id=%s
         """, (nuevo_stock, material_id))
 
+        # 🚨 ALERTA SI STOCK <= STOCK MINIMO
+        if nuevo_stock <= float(material["stock_minimo"]):
+            flash(
+                f"⚠️ El material '{material['nombre']}' quedó con stock bajo ({nuevo_stock}). Reabastecer pronto.",
+                "warning"
+            )
+
         conexion.commit()
         conexion.close()
 
-        return redirect(url_for("produccion.gestionar_produccion",
-                                pedido_id=pedido_id))
+        return redirect(url_for("produccion.gestionar_produccion", pedido_id=pedido_id))
 
-    # Obtener materiales ya usados en el pedido
+    # Materiales usados
     cursor.execute("""
         SELECT pm.*, m.nombre
         FROM produccion_materiales pm

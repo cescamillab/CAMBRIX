@@ -1,25 +1,35 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login - Cambri</title>
-</head>
-<body>
-    <h2>Iniciar Sesión</h2>
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container" style="max-width: 400px; margin: auto; margin-top: 80px;">
+
+    <h2 style="text-align:center;">Iniciar Sesión</h2>
 
     {% if error %}
-        <p style="color: red;">{{ error }}</p>
+        <div style="color: red; text-align:center; margin-bottom:15px;">
+            {{ error }}
+        </div>
     {% endif %}
 
     <form method="POST">
-        <label>Usuario:</label>
-        <input type="text" name="username" required><br><br>
 
-        <label>Contraseña:</label>
-        <input type="password" name="password" required><br><br>
+        <div style="margin-bottom:15px;">
+            <label>Usuario</label>
+            <input type="text" name="username" class="form-control" required>
+        </div>
 
-        <button type="submit">Ingresar</button>
+        <div style="margin-bottom:20px;">
+            <label>Contraseña</label>
+            <input type="password" name="password" class="form-control" required>
+        </div>
+
+        <div style="text-align:center;">
+            <button type="submit" class="btn btn-primary">Ingresar</button>
+        </div>
+
     </form>
 
+</div>
 
-</body>
-</html>
+{% endblock %}

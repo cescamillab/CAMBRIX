@@ -4,6 +4,29 @@
 
 <h2 class="mb-4">Dashboard</h2>
 
+{% if materiales_bajos %}
+
+<div class="alert alert-danger">
+
+    <h5>⚠ Materiales con stock bajo</h5>
+
+    <ul>
+
+        {% for m in materiales_bajos %}
+
+        <li>
+            {{ m.nombre }} :
+            {{ m.stock_actual }}
+            (mínimo {{ m.stock_minimo }})
+        </li>
+
+        {% endfor %}
+
+    </ul>
+
+</div>
+{% endif %}
+
 <div class="row">
 
     <div class="col-md-3">

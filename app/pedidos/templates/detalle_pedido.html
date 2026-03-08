@@ -3,85 +3,154 @@
 {% block content %}
 
 <div class="card shadow-sm">
-    <div class="card-header bg-dark text-white">
-        <h4 class="mb-0">Detalle del Pedido #{{ pedido.id }}</h4>
-    </div>
 
-    <div class="card-body">
+```
+<div class="card-header bg-dark text-white">
+    <h4 class="mb-0">Detalle del Pedido #{{ pedido.id }}</h4>
+</div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <h5>Información del Cliente</h5>
-                <p><strong>Nombre:</strong> {{ pedido.cliente_nombre }}</p>
-                <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
-                <p><strong>Correo:</strong> {{ pedido.correo }}</p>
-            </div>
+<div class="card-body">
 
-            <div class="col-md-6">
-                <h5>Información del Pedido</h5>
-                <p><strong>Estado:</strong> 
-                    <span class="badge bg-info">{{ pedido.estado }}</span>
-                </p>
-                <p><strong>Fecha creación:</strong> {{ pedido.fecha_creacion }}</p>
-                <p><strong>Fecha entrega:</strong> {{ pedido.fecha_entrega }}</p>
-                <p><strong>Responsable:</strong> {{ pedido.responsable_nombre }}</p>
-            </div>
+    <div class="row">
+
+        <!-- INFORMACIÓN CLIENTE -->
+        <div class="col-md-6">
+            <h5>Información del Cliente</h5>
+            <p><strong>Nombre:</strong> {{ pedido.cliente_nombre }}</p>
+            <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
+            <p><strong>Correo:</strong> {{ pedido.correo }}</p>
         </div>
 
-        <hr>
+        <!-- INFORMACIÓN PEDIDO -->
+        <div class="col-md-6">
+            <h5>Información del Pedido</h5>
 
-        <h5>Descripción</h5>
-        <p>{{ pedido.descripcion }}</p>
+            <p>
+                <strong>Estado:</strong>
 
-        <hr>
+                {% if pedido.estado == "pendiente" %}
+                    <span class="badge bg-secondary">Pendiente</span>
+                {% elif pedido.estado == "en_proceso" %}
+                    <span class="badge bg-warning text-dark">En Producción</span>
+                {% elif pedido.estado == "terminado" %}
+                    <span class="badge bg-success">Terminado</span>
+                {% endif %}
 
-        <h5>Información Financiera</h5>
-        <p><strong>Valor total:</strong> ${{ pedido.valor_total }}</p>
-        <p><strong>Anticipo:</strong> ${{ pedido.anticipo }}</p>
-        <p><strong>Saldo:</strong> ${{ pedido.saldo }}</p>
+            </p>
+
+            <p><strong>Fecha creación:</strong> {{ pedido.fecha_creacion }}</p>
+            <p><strong>Fecha entrega:</strong> {{ pedido.fecha_entrega }}</p>
+            <p><strong>Responsable:</strong> {{ pedido.responsable_nombre }}</p>
+        </div>
 
     </div>
 
-    <div class="card-footer d-flex justify-content-between">
+    <hr>
 
-        <div>
-            <a href="{{ url_for('pedidos.listar_pedidos') }}" 
-               class="btn btn-secondary btn-sm">
-               Volver
+    <!-- DESCRIPCIÓN -->
+    <h5>Descripción</h5>
+    <p>{{ pedido.descripcion }}</p>
+
+    <hr>
+
+    <h5>Materiales Usados en Producción</h5>
+
+    {% if produccion %}
+
+    <table class="table table-sm table-striped">
+
+        <thead>
+            <tr>
+                <th>Material</th>
+                <th>Cantidad Usada</th>
+                <th>Costo Unitario</th>
+                <th>Costo Total</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for item in produccion %}
+            <tr>
+                <td>{{ item.nombre }}</td>
+                <td>{{ item.cantidad_usada }}</td>
+                <td>${{ item.costo_unitario }}</td>
+                <td>${{ item.costo_total }}</td>
+            </tr>
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% else %}
+
+    <p class="text-muted">Aún no se han usado materiales en este pedido.</p>
+
+    {% endif %}
+
+    <hr>
+
+    <!-- INFORMACIÓN FINANCIERA -->
+    <h5>Información Financiera</h5>
+
+    <p><strong>Valor total:</strong> ${{ pedido.valor_total }}</p>
+    <p><strong>Anticipo:</strong> ${{ pedido.anticipo }}</p>
+    <p><strong>Saldo:</strong> ${{ pedido.saldo }}</p>
+
+</div>
+
+
+<!-- BOTONES -->
+<div class="card-footer d-flex justify-content-between">
+
+    <div>
+        <a href="{{ url_for('pedidos.listar_pedidos') }}"
+           class="btn btn-secondary btn-sm">
+           Volver
+        </a>
+    </div>
+
+    <div>
+
+        <!-- BOTÓN PRODUCCIÓN -->
+        {% if pedido.estado != 'terminado' %}
+            <a href="{{ url_for('produccion.gestionar_produccion', pedido_id=pedido.id) }}"
+               class="btn btn-warning btn-sm">
+               Gestionar Producción
             </a>
-        </div>
+        {% endif %}
 
-        <div>
+        <!-- EDITAR -->
+        {% if session['rol'] == 'jefe' and pedido.estado != 'terminado' %}
+            <a href="{{ url_for('pedidos.editar_pedido', pedido_id=pedido.id) }}"
+               class="btn btn-primary btn-sm">
+               Editar
+            </a>
+        {% endif %}
 
-            {% if pedido.estado != 'terminado' %}
-                <a href="{{ url_for('produccion.gestionar_produccion', pedido_id=pedido.id) }}"
-                   class="btn btn-warning btn-sm">
-                   Gestionar Producción
-                </a>
-            {% endif %}
+        <!-- ELIMINAR -->
+        {% if session['rol'] == 'jefe' %}
+            <form method="POST"
+                  action="{{ url_for('pedidos.eliminar_pedido', pedido_id=pedido.id) }}"
+                  style="display:inline;">
 
-            {% if session['rol'] == 'jefe' and pedido.estado != 'terminado' %}
-                <a href="{{ url_for('pedidos.editar_pedido', pedido_id=pedido.id) }}"
-                   class="btn btn-primary btn-sm">
-                   Editar
-                </a>
-            {% endif %}
+                <button type="submit"
+                        class="btn btn-danger btn-sm"
+                        onclick="return confirm('¿Eliminar este pedido?')">
 
-            {% if session['rol'] == 'jefe' %}
-                <form method="POST"
-                      action="{{ url_for('pedidos.eliminar_pedido', pedido_id=pedido.id) }}"
-                      style="display:inline;">
-                    <button type="submit"
-                            class="btn btn-danger btn-sm"
-                            onclick="return confirm('¿Eliminar este pedido?')">
-                        Eliminar
-                    </button>
-                </form>
-            {% endif %}
+                    Eliminar
 
-        </div>
+                </button>
+
+            </form>
+        {% endif %}
 
     </div>
+
+</div>
+```
+
 </div>
 
 {% endblock %}

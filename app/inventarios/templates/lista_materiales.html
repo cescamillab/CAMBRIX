@@ -12,6 +12,12 @@
     {% endif %}
 </div>
 
+{% if alerta_stock.bajos > 0 %}
+<div class="alert alert-warning">
+    ⚠ Hay <strong>{{ alerta_stock.bajos }}</strong> materiales con stock mínimo o crítico.
+</div>
+{% endif %}
+
 <table class="table table-bordered table-striped">
     <thead class="table-dark">
         <tr>
@@ -27,25 +33,49 @@
         {% for m in materiales %}
         <tr>
             <td>{{ m.nombre }}</td>
+
             <td>{{ m.categoria }}</td>
-            <td>{{ m.stock_actual }} {{ m.unidad_medida }}</td>
-            <td>{{ m.stock_minimo }}</td>
-            <td>${{ m.costo_unitario }}</td>
+
             <td>
+                {% if m.stock_actual <= m.stock_minimo %}
+                    <span class="badge bg-danger">
+                        {{ m.stock_actual }} {{ m.unidad_medida }}
+                    </span>
+                {% else %}
+                    {{ m.stock_actual }} {{ m.unidad_medida }}
+                {% endif %}
+            </td>
+
+            <td>{{ m.stock_minimo }}</td>
+
+            <td>${{ m.costo_unitario }}</td>
+
+            <td>
+
                 {% if session["rol"] == "jefe" %}
+
                 <a href="{{ url_for('inventarios.editar_material', id=m.id) }}"
-                   class="btn btn-sm btn-warning">Editar</a>
+                   class="btn btn-sm btn-warning">
+                   Editar
+                </a>
 
                 <a href="{{ url_for('inventarios.eliminar_material', id=m.id) }}"
-                   class="btn btn-sm btn-danger">Eliminar</a>
+                   class="btn btn-sm btn-danger">
+                   Eliminar
+                </a>
 
                 <a href="{{ url_for('inventarios.registrar_movimiento', material_id=m.id) }}"
-                    class="btn btn-sm btn-info">Movimiento</a>   
-                
-                <a href="{{ url_for('inventarios.historial_material', material_id=m.id) }}"
-                    class="btn btn-sm btn-dark">Historial</a>
+                   class="btn btn-sm btn-info">
+                   Movimiento
+                </a>
 
                 {% endif %}
+
+                <a href="{{ url_for('inventarios.historial_material', material_id=m.id) }}"
+                   class="btn btn-sm btn-dark">
+                   Historial
+                </a>
+
             </td>
         </tr>
         {% endfor %}
