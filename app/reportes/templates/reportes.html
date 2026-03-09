@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+<h2>Centro de Reportes</h2>
+
+<hr>
+
+<div class="card mb-3">
+<div class="card-body">
+
+<h5>Reporte de Pedidos</h5>
+
+<a href="{{ url_for('reportes.reporte_pedidos_excel') }}" class="btn btn-success">
+Descargar Excel
+</a>
+
+<a href="{{ url_for('reportes.reporte_pedidos_pdf') }}" class="btn btn-danger">
+Descargar PDF
+</a>
+
+</div>
+</div>
+
+
+<div class="card mb-3">
+<div class="card-body">
+
+<h5>Reporte de Producción</h5>
+
+<a href="{{ url_for('reportes.reporte_produccion_excel') }}" class="btn btn-success">
+Descargar Excel
+</a>
+
+</div>
+</div>
+
+
+<div class="card mb-3">
+<div class="card-body">
+
+<h5>Reporte de Inventario</h5>
+
+<a href="{{ url_for('reportes.reporte_inventario_excel') }}" class="btn btn-success">
+Descargar Excel
+</a>
+
+</div>
+</div>
+
+</div>
+
+{% endblock %}
