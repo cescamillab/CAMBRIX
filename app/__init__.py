@@ -12,6 +12,7 @@ def create_app():
     from .inventarios.routes import inventarios_bp
     from .produccion.routes import produccion_bp
     from .reportes.routes import reportes_bp
+    from .empleados.routes import empleados_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -19,6 +20,7 @@ def create_app():
     app.register_blueprint(inventarios_bp)
     app.register_blueprint(produccion_bp)
     app.register_blueprint(reportes_bp)
+    app.register_blueprint(empleados_bp)
 
     @app.after_request
     def add_header(response):

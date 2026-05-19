@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4 navbar-top">
+        <h2 class="page-title"><i class="bi bi-people-fill me-2 text-cambri-blue"></i>Administración de Empleados</h2>
+        <button class="btn btn-primary bg-cambri-blue border-0" data-bs-toggle="modal" data-bs-target="#modalCrearEmpleado">
+            <i class="bi bi-plus-lg me-2"></i>Registrar Empleado
+        </button>
+    </div>
+
+    <!-- Tabla de Empleados -->
+    <div class="stat-card">
+        <div class="table-responsive w-100">
+            <table class="table table-custom table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre Completo</th>
+                        <th>Nombre de Usuario</th>
+                        <th>Rol</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for empleado in empleados %}
+                    <tr>
+                        <td>{{ empleado.id }}</td>
+                        <td class="fw-bold">{{ empleado.nombre }}</td>
+                        <td>{{ empleado.username }}</td>
+                        <td>
+                            {% if empleado.rol == 'jefe' %}
+                                <span class="badge bg-primary rounded-pill"><i class="bi bi-star-fill me-1"></i>Jefe</span>
+                            {% else %}
+                                <span class="badge bg-secondary rounded-pill"><i class="bi bi-person-fill me-1"></i>Empleado</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarEmpleadoG" 
+                                data-emp-id="{{ empleado.id }}" 
+                                data-emp-nombre="{{ empleado.nombre }}" 
+                                data-emp-username="{{ empleado.username }}" 
+                                data-emp-rol="{{ empleado.rol }}" 
+                                title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            {% if session.user_id != empleado.id %}
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-1" data-bs-toggle="modal" data-bs-target="#modalEliminarEmpleadoG" 
+                                data-emp-id="{{ empleado.id }}" 
+                                data-emp-nombre="{{ empleado.nombre }}" 
+                                title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">No hay empleados registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear -->
+<div class="modal fade" id="modalCrearEmpleado" tabindex="-1" aria-labelledby="modalCrearLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="modalCrearLabel">Registrar Nuevo Empleado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('empleados.crear_empleado') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nombre Completo</label>
+                        <input type="text" name="nombre" class="form-control" required placeholder="Ej: Juan Pérez">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nombre de Usuario</label>
+                        <input type="text" name="username" class="form-control" required placeholder="Ej: jperez">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Contraseña</label>
+                        <input type="password" name="password" class="form-control" required placeholder="Ingresar contraseña">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Rol</label>
+                        <select name="rol" class="form-select" required>
+                            <option value="empleado">Empleado</option>
+                            <option value="jefe">Jefe</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary bg-cambri-blue border-0">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Global Editar Empleado -->
+<div class="modal fade" id="modalEditarEmpleadoG" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title">Editar Empleado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formEditarEmpleado" action="" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nombre Completo</label>
+                        <input type="text" id="editNombre" name="nombre" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nombre de Usuario</label>
+                        <input type="text" id="editUsername" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Rol</label>
+                        <select id="editRol" name="rol" class="form-select" required>
+                            <option value="empleado">Empleado</option>
+                            <option value="jefe">Jefe</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nueva Contraseña (Opcional)</label>
+                        <input type="password" name="password" class="form-control" placeholder="Dejar en blanco para no cambiar">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary bg-cambri-blue border-0">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Global Eliminar Empleado -->
+<div class="modal fade" id="modalEliminarEmpleadoG" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-start">
+                <p class="fs-6 mb-2">¿Estás seguro de que deseas eliminar al empleado <strong id="empNombreEliminar"></strong>?</p>
+                <p class="text-muted small mb-0"><i class="bi bi-info-circle me-1"></i>Esta acción es irreversible y los datos de acceso se perderán.</p>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formEliminarEmpleado" method="POST" action="" class="m-0 p-0 d-inline">
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Sí, Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Lógica Modal Editar
+        var modalEditar = document.getElementById('modalEditarEmpleadoG');
+        if (modalEditar) {
+            modalEditar.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                var empId = button.getAttribute('data-emp-id');
+                
+                modalEditar.querySelector('#editNombre').value = button.getAttribute('data-emp-nombre');
+                modalEditar.querySelector('#editUsername').value = button.getAttribute('data-emp-username');
+                modalEditar.querySelector('#editRol').value = button.getAttribute('data-emp-rol');
+                
+                var formEditar = modalEditar.querySelector('#formEditarEmpleado');
+                formEditar.action = "{{ url_for('empleados.editar_empleado', id=0) }}".replace('0', empId);
+            });
+        }
+
+        // Lógica Modal Eliminar
+        var modalEliminar = document.getElementById('modalEliminarEmpleadoG');
+        if (modalEliminar) {
+            modalEliminar.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                var empId = button.getAttribute('data-emp-id');
+                var empNombre = button.getAttribute('data-emp-nombre');
+                
+                var modalTitle = modalEliminar.querySelector('#empNombreEliminar');
+                modalTitle.textContent = empNombre;
+                
+                var formEliminar = modalEliminar.querySelector('#formEliminarEmpleado');
+                formEliminar.action = "{{ url_for('empleados.eliminar_empleado', id=0) }}".replace('0', empId);
+            });
+        }
+    });
+</script>
+
+{% endblock %}

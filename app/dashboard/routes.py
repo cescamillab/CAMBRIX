@@ -111,6 +111,58 @@ def home():
         """, (user_id,))
         ingresos = cursor.fetchall()
 
+    # =========================
+    # NUEVOS COMPONENTES DASHBOARD
+    # =========================
+
+    if rol == "jefe":
+        # Top 5 Materiales
+        cursor.execute("""
+            SELECT m.nombre, SUM(pm.cantidad_usada) as total_usado
+            FROM produccion_materiales pm
+            JOIN materiales m ON pm.material_id = m.id
+            GROUP BY pm.material_id
+            ORDER BY total_usado DESC
+            LIMIT 5
+        """)
+        top_materiales = cursor.fetchall()
+
+        # Top 5 Clientes
+        cursor.execute("""
+            SELECT c.nombre, SUM(p.valor_total) as total_facturado
+            FROM pedidos p
+            JOIN clientes c ON p.cliente_id = c.id
+            GROUP BY p.cliente_id
+            ORDER BY total_facturado DESC
+            LIMIT 5
+        """)
+        top_clientes = cursor.fetchall()
+
+        # Últimos 5 pedidos
+        cursor.execute("""
+            SELECT p.id, c.nombre as cliente, p.valor_total, p.estado
+            FROM pedidos p
+            JOIN clientes c ON p.cliente_id = c.id
+            ORDER BY p.fecha_creacion DESC
+            LIMIT 5
+        """)
+        ultimos_pedidos = cursor.fetchall()
+
+    else:
+        # Si no es jefe, mostramos listas vacías o adaptadas al empleado
+        top_materiales = []
+        top_clientes = []
+        
+        cursor.execute("""
+            SELECT p.id, c.nombre as cliente, p.valor_total, p.estado
+            FROM pedidos p
+            JOIN clientes c ON p.cliente_id = c.id
+            WHERE p.responsable_id = %s
+            ORDER BY p.fecha_creacion DESC
+            LIMIT 5
+        """, (user_id,))
+        ultimos_pedidos = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
@@ -125,5 +177,8 @@ def home():
         rol=rol,
         estados=estados,
         ingresos=ingresos,
-        materiales_bajos=materiales_bajos
+        materiales_bajos=materiales_bajos,
+        top_materiales=top_materiales,
+        top_clientes=top_clientes,
+        ultimos_pedidos=ultimos_pedidos
     )

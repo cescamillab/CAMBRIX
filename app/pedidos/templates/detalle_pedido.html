@@ -2,155 +2,153 @@
 
 {% block content %}
 
-<div class="card shadow-sm">
-
-```
-<div class="card-header bg-dark text-white">
-    <h4 class="mb-0">Detalle del Pedido #{{ pedido.id }}</h4>
-</div>
-
-<div class="card-body">
-
-    <div class="row">
-
-        <!-- INFORMACIÓN CLIENTE -->
-        <div class="col-md-6">
-            <h5>Información del Cliente</h5>
-            <p><strong>Nombre:</strong> {{ pedido.cliente_nombre }}</p>
-            <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
-            <p><strong>Correo:</strong> {{ pedido.correo }}</p>
-        </div>
-
-        <!-- INFORMACIÓN PEDIDO -->
-        <div class="col-md-6">
-            <h5>Información del Pedido</h5>
-
-            <p>
-                <strong>Estado:</strong>
-
-                {% if pedido.estado == "pendiente" %}
-                    <span class="badge bg-secondary">Pendiente</span>
-                {% elif pedido.estado == "en_proceso" %}
-                    <span class="badge bg-warning text-dark">En Producción</span>
-                {% elif pedido.estado == "terminado" %}
-                    <span class="badge bg-success">Terminado</span>
-                {% endif %}
-
-            </p>
-
-            <p><strong>Fecha creación:</strong> {{ pedido.fecha_creacion }}</p>
-            <p><strong>Fecha entrega:</strong> {{ pedido.fecha_entrega }}</p>
-            <p><strong>Responsable:</strong> {{ pedido.responsable_nombre }}</p>
-        </div>
-
-    </div>
-
-    <hr>
-
-    <!-- DESCRIPCIÓN -->
-    <h5>Descripción</h5>
-    <p>{{ pedido.descripcion }}</p>
-
-    <hr>
-
-    <h5>Materiales Usados en Producción</h5>
-
-    {% if produccion %}
-
-    <table class="table table-sm table-striped">
-
-        <thead>
-            <tr>
-                <th>Material</th>
-                <th>Cantidad Usada</th>
-                <th>Costo Unitario</th>
-                <th>Costo Total</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            {% for item in produccion %}
-            <tr>
-                <td>{{ item.nombre }}</td>
-                <td>{{ item.cantidad_usada }}</td>
-                <td>${{ item.costo_unitario }}</td>
-                <td>${{ item.costo_total }}</td>
-            </tr>
-            {% endfor %}
-
-        </tbody>
-
-    </table>
-
-    {% else %}
-
-    <p class="text-muted">Aún no se han usado materiales en este pedido.</p>
-
-    {% endif %}
-
-    <hr>
-
-    <!-- INFORMACIÓN FINANCIERA -->
-    <h5>Información Financiera</h5>
-
-    <p><strong>Valor total:</strong> ${{ pedido.valor_total }}</p>
-    <p><strong>Anticipo:</strong> ${{ pedido.anticipo }}</p>
-    <p><strong>Saldo:</strong> ${{ pedido.saldo }}</p>
-
-</div>
-
-
-<!-- BOTONES -->
-<div class="card-footer d-flex justify-content-between">
-
+<div class="navbar-top mb-4 d-flex justify-content-between align-items-center">
+    <h2 class="page-title m-0">Detalle del Pedido <span class="text-cambri-blue">#{{ pedido.id }}</span></h2>
+    
     <div>
-        <a href="{{ url_for('pedidos.listar_pedidos') }}"
-           class="btn btn-secondary btn-sm">
-           Volver
-        </a>
-    </div>
-
-    <div>
-
-        <!-- BOTÓN PRODUCCIÓN -->
-        {% if pedido.estado != 'terminado' %}
-            <a href="{{ url_for('produccion.gestionar_produccion', pedido_id=pedido.id) }}"
-               class="btn btn-warning btn-sm">
-               Gestionar Producción
-            </a>
+        {% if pedido.estado == "pendiente" %}
+            <span class="badge badge-custom text-warning" style="background: rgba(255,193,7,0.1); font-size: 14px;"><i class="bi bi-clock-history"></i> Pendiente</span>
+        {% elif pedido.estado == "en_proceso" %}
+            <span class="badge badge-custom text-cambri-blue" style="background: rgba(2,158,242,0.1); font-size: 14px;"><i class="bi bi-gear-fill"></i> En Producción</span>
+        {% elif pedido.estado == "terminado" %}
+            <span class="badge badge-custom text-success" style="background: rgba(25,135,84,0.1); font-size: 14px;"><i class="bi bi-check-circle-fill"></i> Terminado</span>
+        {% else %}
+            <span class="badge badge-custom text-danger" style="background: rgba(220,53,69,0.1); font-size: 14px;">{{ pedido.estado }}</span>
         {% endif %}
+    </div>
+</div>
 
-        <!-- EDITAR -->
+<div class="row g-4">
+    <!-- INFORMACIÓN PRINCIPAL (Izquierda) -->
+    <div class="col-lg-8">
+        
+        <div class="stat-card mb-4">
+            <h5 class="text-cambri-blue border-bottom pb-2 mb-3"><i class="bi bi-card-text"></i> Descripción del Pedido</h5>
+            <p class="fs-5">{{ pedido.descripcion }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h5 class="text-cambri-blue border-bottom pb-2 mb-3"><i class="bi bi-tools"></i> Materiales Usados en Producción</h5>
+            
+            {% if produccion %}
+            <div class="table-responsive">
+                <table class="table-custom mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-3">Material</th>
+                            <th class="text-center">Cantidad Usada</th>
+                            <th class="text-end">Costo Unitario</th>
+                            <th class="text-end pe-3">Costo Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in produccion %}
+                        <tr>
+                            <td class="ps-3 fw-bold">{{ item.nombre }}</td>
+                            <td class="text-center">{{ item.cantidad_usada }}</td>
+                            <td class="text-end text-muted">${{ '{:,.2f}'.format(item.costo_unitario) }}</td>
+                            <td class="text-end pe-3 fw-bold text-danger">${{ '{:,.2f}'.format(item.costo_total) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-box-seam fs-1 d-block mb-2"></i>
+                Aún no se han registrado materiales en la producción de este pedido.
+            </div>
+            {% endif %}
+
+            {% if pedido.estado != 'terminado' %}
+            <div class="mt-3 text-end">
+                <a href="{{ url_for('produccion.gestionar_produccion', pedido_id=pedido.id) }}" class="btn btn-warning text-dark px-4" style="border-radius: 8px; font-weight: 600;">
+                    <i class="bi bi-gear-wide-connected"></i> Gestionar Producción
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- PANELES LATERALES (Derecha) -->
+    <div class="col-lg-4">
+        
+        <!-- Cliente -->
+        <div class="stat-card mb-4">
+            <h6 class="text-secondary fw-bold text-uppercase mb-3"><i class="bi bi-person-circle"></i> Datos del Cliente</h6>
+            <h4 class="fw-bold mb-1">{{ pedido.cliente_nombre }}</h4>
+            <div class="d-flex align-items-center text-muted mb-2">
+                <i class="bi bi-telephone-fill me-2"></i> {{ pedido.telefono }}
+            </div>
+            <div class="d-flex align-items-center text-muted">
+                <i class="bi bi-envelope-fill me-2"></i> {{ pedido.correo }}
+            </div>
+        </div>
+
+        <!-- Fechas y Responsable -->
+        <div class="stat-card mb-4">
+            <h6 class="text-secondary fw-bold text-uppercase mb-3"><i class="bi bi-info-circle-fill"></i> Detalles Operativos</h6>
+            
+            <div class="mb-3">
+                <span class="d-block text-muted small fw-bold">Fecha de Creación</span>
+                <span class="fs-6"><i class="bi bi-calendar-plus text-cambri-blue"></i> {{ pedido.fecha_creacion }}</span>
+            </div>
+            
+            <div class="mb-3">
+                <span class="d-block text-muted small fw-bold">Fecha Límite de Entrega</span>
+                <span class="fs-6 fw-bold"><i class="bi bi-calendar-check text-danger"></i> {{ pedido.fecha_entrega }}</span>
+            </div>
+
+            <div>
+                <span class="d-block text-muted small fw-bold">Responsable Asignado</span>
+                <span class="fs-6"><i class="bi bi-person-badge text-cambri-blue"></i> {{ pedido.responsable_nombre }}</span>
+            </div>
+        </div>
+
+        <!-- Resumen Financiero -->
+        <div class="stat-card bg-cambri-blue text-white shadow-hover" style="border: none;">
+            <h6 class="fw-bold text-uppercase mb-3 opacity-75"><i class="bi bi-wallet2"></i> Resumen Financiero</h6>
+            
+            <div class="d-flex justify-content-between mb-2">
+                <span>Valor Total:</span>
+                <span class="fw-bold">${{ '{:,.2f}'.format(pedido.valor_total) }}</span>
+            </div>
+            
+            <div class="d-flex justify-content-between mb-2 pb-2 border-bottom border-light border-opacity-25">
+                <span>Anticipo Pagado:</span>
+                <span class="fw-bold text-warning">${{ '{:,.2f}'.format(pedido.anticipo) }}</span>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-3">
+                <span class="fs-5">SALDO PENDIENTE:</span>
+                <span class="fs-4 fw-bold">${{ '{:,.2f}'.format(pedido.saldo) }}</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- BARRA DE ACCIONES INFERIOR -->
+<div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+    <a href="{{ url_for('pedidos.listar_pedidos') }}" class="btn btn-outline-secondary px-4">
+        <i class="bi bi-arrow-left"></i> Volver a la Lista
+    </a>
+
+    <div class="d-flex gap-2">
         {% if session['rol'] == 'jefe' and pedido.estado != 'terminado' %}
-            <a href="{{ url_for('pedidos.editar_pedido', pedido_id=pedido.id) }}"
-               class="btn btn-primary btn-sm">
-               Editar
-            </a>
+        <a href="{{ url_for('pedidos.editar_pedido', pedido_id=pedido.id) }}" class="btn bg-white border shadow-sm text-warning fw-bold px-4">
+            <i class="bi bi-pencil-fill"></i> Editar Pedido
+        </a>
         {% endif %}
 
-        <!-- ELIMINAR -->
         {% if session['rol'] == 'jefe' %}
-            <form method="POST"
-                  action="{{ url_for('pedidos.eliminar_pedido', pedido_id=pedido.id) }}"
-                  style="display:inline;">
-
-                <button type="submit"
-                        class="btn btn-danger btn-sm"
-                        onclick="return confirm('¿Eliminar este pedido?')">
-
-                    Eliminar
-
-                </button>
-
-            </form>
+        <form method="POST" action="{{ url_for('pedidos.eliminar_pedido', pedido_id=pedido.id) }}" style="margin: 0;" onsubmit="return confirm('¿Estás seguro de eliminar permanentemente este pedido?');">
+            <button type="submit" class="btn bg-white border shadow-sm text-danger fw-bold px-4">
+                <i class="bi bi-trash-fill"></i> Eliminar
+            </button>
+        </form>
         {% endif %}
-
     </div>
-
-</div>
-```
-
 </div>
 
 {% endblock %}

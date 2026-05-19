@@ -1,35 +1,73 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - CAMBRI</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
 
-{% block content %}
+<body class="login-page">
 
-<div class="container" style="max-width: 400px; margin: auto; margin-top: 80px;">
+    <div class="login-container shadow-lg">
+        
+        <!-- Left Side: Form -->
+        <div class="login-form-container">
+            
+            <!-- Logo Space -->
+            <div class="text-center mb-4">
+                <!-- Intenta cargar el logo si existe, de lo contrario muestra el icono -->
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="CAMBRI Logo" style="max-height: 90px; margin-bottom: 15px;" onerror="this.onerror=null; this.style.display='none'; document.getElementById('fallback-icon').style.display='flex';">
+                <div id="fallback-icon" class="login-logo mx-auto" style="display: none;">
+                    <i class="bi bi-layers-fill"></i>
+                </div>
+            </div>
 
-    <h2 style="text-align:center;">Iniciar Sesión</h2>
+            <h3 class="text-center">Bienvenido a CAMBRI</h3>
+            <p class="text-muted text-center mb-4">Ingresa tus credenciales para acceder al sistema.</p>
 
-    {% if error %}
-        <div style="color: red; text-align:center; margin-bottom:15px;">
-            {{ error }}
+            {% if error %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="floatingUsername" name="username" placeholder="Usuario" required>
+                    <label for="floatingUsername"><i class="bi bi-person me-2"></i>Usuario</label>
+                </div>
+                
+                <div class="form-floating mb-4">
+                    <input type="password" class="form-control" id="floatingPassword" name="password" placeholder="Contraseña" required>
+                    <label for="floatingPassword"><i class="bi bi-lock me-2"></i>Contraseña</label>
+                </div>
+                
+                <button type="submit" class="btn btn-login">
+                    Iniciar Sesión <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+            </form>
         </div>
-    {% endif %}
 
-    <form method="POST">
-
-        <div style="margin-bottom:15px;">
-            <label>Usuario</label>
-            <input type="text" name="username" class="form-control" required>
+        <!-- Right Side: Image -->
+        <div class="login-image">
+            <div class="login-image-overlay">
+                <h2>Control y Eficiencia</h2>
+                <p>Plataforma centralizada para la gestión eficiente de pedidos e inventario.</p>
+            </div>
         </div>
 
-        <div style="margin-bottom:20px;">
-            <label>Contraseña</label>
-            <input type="password" name="password" class="form-control" required>
-        </div>
+    </div>
 
-        <div style="text-align:center;">
-            <button type="submit" class="btn btn-primary">Ingresar</button>
-        </div>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    </form>
-
-</div>
-
-{% endblock %}
+</body>
+</html>

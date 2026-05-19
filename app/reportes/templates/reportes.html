@@ -2,54 +2,147 @@
 
 {% block content %}
 
-<div class="container mt-4">
-
-<h2>Centro de Reportes</h2>
-
-<hr>
-
-<div class="card mb-3">
-<div class="card-body">
-
-<h5>Reporte de Pedidos</h5>
-
-<a href="{{ url_for('reportes.reporte_pedidos_excel') }}" class="btn btn-success">
-Descargar Excel
-</a>
-
-<a href="{{ url_for('reportes.reporte_pedidos_pdf') }}" class="btn btn-danger">
-Descargar PDF
-</a>
-
-</div>
+<div class="navbar-top mb-4">
+    <h2 class="page-title">Centro de Reportes</h2>
 </div>
 
-
-<div class="card mb-3">
-<div class="card-body">
-
-<h5>Reporte de Producción</h5>
-
-<a href="{{ url_for('reportes.reporte_produccion_excel') }}" class="btn btn-success">
-Descargar Excel
-</a>
-
-</div>
-</div>
-
-
-<div class="card mb-3">
-<div class="card-body">
-
-<h5>Reporte de Inventario</h5>
-
-<a href="{{ url_for('reportes.reporte_inventario_excel') }}" class="btn btn-success">
-Descargar Excel
-</a>
-
-</div>
+<!-- Filtro Global de Fechas -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="stat-card" style="padding: 20px;">
+            <form id="filterForm" class="row g-3 align-items-center w-100">
+                <div class="col-auto">
+                    <label class="form-label text-secondary fw-bold mb-0"><i class="bi bi-funnel-fill"></i> Filtrar por Rango de Fechas:</label>
+                </div>
+                <div class="col-md-3">
+                    <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio">
+                </div>
+                <div class="col-md-3">
+                    <input type="date" class="form-control" id="fecha_fin" name="fecha_fin">
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn text-white bg-cambri-blue" onclick="aplicarFiltros()"><i class="bi bi-check2-circle"></i> Aplicar Filtros</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="limpiarFiltros()"><i class="bi bi-x-circle"></i> Limpiar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
+<div class="row">
+    <!-- Tarjeta: Reporte de Pedidos -->
+    <div class="col-md-4 mb-4">
+        <div class="stat-card flex-column align-items-start" style="height: 100%;">
+            <div class="d-flex w-100 justify-content-between align-items-center mb-3">
+                <div class="stat-icon text-cambri-blue" style="background: rgba(2, 158, 242, 0.1);">
+                    <i class="bi bi-box-seam-fill"></i>
+                </div>
+                <span class="badge text-cambri-blue bg-light">Data: {{ total_pedidos }} registros</span>
+            </div>
+            <h4 class="fw-bold mb-2">Reporte de Pedidos</h4>
+            <p class="text-secondary small mb-4">Exporta el historial de pedidos con información del cliente, monto total, anticipo y estado actual. (Soporta filtro de fechas).</p>
+            
+            <div class="mt-auto w-100 d-flex gap-2">
+                <a href="#" class="btn btn-outline-success flex-grow-1 export-btn" data-url="{{ url_for('reportes.reporte_pedidos_excel') }}">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Excel
+                </a>
+                <a href="#" class="btn btn-outline-danger flex-grow-1 export-btn" data-url="{{ url_for('reportes.reporte_pedidos_pdf') }}">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjeta: Reporte de Producción -->
+    <div class="col-md-4 mb-4">
+        <div class="stat-card flex-column align-items-start" style="height: 100%;">
+            <div class="d-flex w-100 justify-content-between align-items-center mb-3">
+                <div class="stat-icon text-warning" style="background: rgba(255, 193, 7, 0.1);">
+                    <i class="bi bi-tools"></i>
+                </div>
+            </div>
+            <h4 class="fw-bold mb-2">Reporte de Producción</h4>
+            <p class="text-secondary small mb-4">Detalle de todos los materiales utilizados en cada pedido y su costo. Excelente para auditorías. (Soporta filtro de fechas).</p>
+            
+            <div class="mt-auto w-100 d-flex gap-2">
+                <a href="#" class="btn btn-outline-success flex-grow-1 export-btn" data-url="{{ url_for('reportes.reporte_produccion_excel') }}">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Excel
+                </a>
+                <a href="#" class="btn btn-outline-danger flex-grow-1 export-btn" data-url="{{ url_for('reportes.reporte_produccion_pdf') }}">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjeta: Reporte de Inventario -->
+    <div class="col-md-4 mb-4">
+        <div class="stat-card flex-column align-items-start" style="height: 100%;">
+            <div class="d-flex w-100 justify-content-between align-items-center mb-3">
+                <div class="stat-icon text-success" style="background: rgba(25, 135, 84, 0.1);">
+                    <i class="bi bi-archive-fill"></i>
+                </div>
+                <span class="badge text-success bg-light">Data: {{ total_materiales }} ítems</span>
+            </div>
+            <h4 class="fw-bold mb-2">Reporte de Inventario</h4>
+            <p class="text-secondary small mb-4">Descarga el estado <strong>actual</strong> del almacén. Muestra stock en tiempo real y costos de compra. (No aplica filtro de fechas).</p>
+            
+            <div class="mt-auto w-100 d-flex gap-2">
+                <a href="{{ url_for('reportes.reporte_inventario_excel') }}" class="btn btn-outline-success flex-grow-1">
+                    <i class="bi bi-file-earmark-excel-fill"></i> Excel
+                </a>
+                <a href="{{ url_for('reportes.reporte_inventario_pdf') }}" class="btn btn-outline-danger flex-grow-1">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    // Recuperar fechas de sessionStorage al cargar
+    document.addEventListener("DOMContentLoaded", function() {
+        let savedInicio = sessionStorage.getItem("rep_fecha_inicio");
+        let savedFin = sessionStorage.getItem("rep_fecha_fin");
+        if(savedInicio) document.getElementById("fecha_inicio").value = savedInicio;
+        if(savedFin) document.getElementById("fecha_fin").value = savedFin;
+        actualizarUrls();
+    });
+
+    function aplicarFiltros() {
+        let fi = document.getElementById("fecha_inicio").value;
+        let ff = document.getElementById("fecha_fin").value;
+        sessionStorage.setItem("rep_fecha_inicio", fi);
+        sessionStorage.setItem("rep_fecha_fin", ff);
+        actualizarUrls();
+        alert("Filtros aplicados. Ahora las descargas usarán este rango de fechas.");
+    }
+
+    function limpiarFiltros() {
+        document.getElementById("fecha_inicio").value = "";
+        document.getElementById("fecha_fin").value = "";
+        sessionStorage.removeItem("rep_fecha_inicio");
+        sessionStorage.removeItem("rep_fecha_fin");
+        actualizarUrls();
+    }
+
+    function actualizarUrls() {
+        let fi = document.getElementById("fecha_inicio").value;
+        let ff = document.getElementById("fecha_fin").value;
+        let queryParams = "";
+        if(fi || ff) {
+            queryParams = "?";
+            if(fi) queryParams += "fecha_inicio=" + fi + "&";
+            if(ff) queryParams += "fecha_fin=" + ff;
+        }
+
+        // Actualizar hrefs de los botones export-btn
+        let botones = document.querySelectorAll(".export-btn");
+        botones.forEach(btn => {
+            let baseUrl = btn.getAttribute("data-url");
+            btn.href = baseUrl + queryParams;
+        });
+    }
+</script>
 
 {% endblock %}

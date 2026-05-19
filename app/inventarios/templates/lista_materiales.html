@@ -1,85 +1,130 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="d-flex justify-content-between mb-3">
-    <h2>Inventario</h2>
-
+<div class="navbar-top mb-4">
+    <h2 class="page-title"><i class="bi bi-layers-fill"></i> Inventario de Materiales</h2>
     {% if session["rol"] == "jefe" %}
-    <a href="{{ url_for('inventarios.crear_material') }}"
-       class="btn btn-primary">
-       Nuevo Material
+    <a href="{{ url_for('inventarios.crear_material') }}" class="btn text-white bg-cambri-blue px-4 py-2" style="border-radius: 10px;">
+        <i class="bi bi-plus-lg"></i> Nuevo Material
     </a>
     {% endif %}
 </div>
 
 {% if alerta_stock.bajos > 0 %}
-<div class="alert alert-warning">
-    ⚠ Hay <strong>{{ alerta_stock.bajos }}</strong> materiales con stock mínimo o crítico.
+<div class="alert alert-warning border-0 shadow-sm d-flex align-items-center" style="border-radius: 15px; background: rgba(255, 206, 32, 0.1); color: #856404;">
+    <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+    <div>
+        ⚠ Atención: Hay <strong>{{ alerta_stock.bajos }}</strong> materiales con stock mínimo o crítico.
+    </div>
 </div>
 {% endif %}
 
-<table class="table table-bordered table-striped">
-    <thead class="table-dark">
-        <tr>
-            <th>Nombre</th>
-            <th>Categoría</th>
-            <th>Stock</th>
-            <th>Mínimo</th>
-            <th>Costo</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for m in materiales %}
-        <tr>
-            <td>{{ m.nombre }}</td>
+<div class="stat-card p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table-custom mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">Nombre del Material</th>
+                    <th>Categoría</th>
+                    <th class="text-center">Stock Actual</th>
+                    <th class="text-center">Stock Mínimo</th>
+                    <th class="text-end">Costo Unitario</th>
+                    <th class="text-center pe-4">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in materiales %}
+                <tr class="align-middle">
+                    <td class="ps-4 fw-bold text-cambri-blue">{{ m.nombre }}</td>
+                    <td>
+                        <span class="badge bg-light text-secondary border px-2 py-1" style="border-radius: 6px;">{{ m.categoria }}</span>
+                    </td>
+                    <td class="text-center">
+                        {% if m.stock_actual <= m.stock_minimo %}
+                            <span class="badge badge-custom text-danger fw-bold" style="background: rgba(238, 93, 80, 0.1); font-size: 0.9rem;">
+                                <i class="bi bi-arrow-down-circle-fill me-1"></i> {{ m.stock_actual }} {{ m.unidad_medida }}
+                            </span>
+                        {% else %}
+                            <span class="fw-bold">{{ m.stock_actual }}</span> <small class="text-muted">{{ m.unidad_medida }}</small>
+                        {% endif %}
+                    </td>
+                    <td class="text-center text-secondary small">{{ m.stock_minimo }} {{ m.unidad_medida }}</td>
+                    <td class="text-end fw-bold text-cambri-blue">${{ "{:,.2f}".format(m.costo_unitario) }}</td>
+                    <td class="text-center pe-4">
+                        <div class="btn-group shadow-sm" role="group" style="border-radius: 8px; overflow: hidden;">
+                            {% if session["rol"] == "jefe" %}
+                            <a href="{{ url_for('inventarios.editar_material', id=m.id) }}" 
+                               class="btn btn-sm btn-white text-warning border-end" 
+                               data-bs-toggle="tooltip" title="Editar Material">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            <a href="{{ url_for('inventarios.registrar_movimiento', material_id=m.id) }}" 
+                               class="btn btn-sm btn-white text-cambri-blue border-end" 
+                               data-bs-toggle="tooltip" title="Registrar Movimiento">
+                                <i class="bi bi-arrow-left-right"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-white text-danger border-end" 
+                                data-bs-toggle="modal" data-bs-target="#modalEliminarMaterialG" 
+                                data-material-id="{{ m.id }}" data-material-nombre="{{ m.nombre }}" 
+                                title="Eliminar Material">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                            {% endif %}
+                            <a href="{{ url_for('inventarios.historial_material', material_id=m.id) }}" 
+                               class="btn btn-sm btn-white text-dark" 
+                               data-bs-toggle="tooltip" title="Ver Historial">
+                                <i class="bi bi-clock-history"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
-            <td>{{ m.categoria }}</td>
+{% if session['rol'] == 'jefe' %}
+<!-- Modal Global Eliminar Material -->
+<div class="modal fade" id="modalEliminarMaterialG" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-start">
+                <p class="fs-6 mb-2">¿Estás seguro de que deseas eliminar permanentemente el material <strong id="materialNombreEliminar"></strong>?</p>
+                <p class="text-muted small mb-0"><i class="bi bi-info-circle me-1"></i>Se eliminarán también sus movimientos y registros de producción. Esta acción es irreversible.</p>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formEliminarMaterial" method="POST" action="" class="m-0 p-0 d-inline">
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Sí, Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
-            <td>
-                {% if m.stock_actual <= m.stock_minimo %}
-                    <span class="badge bg-danger">
-                        {{ m.stock_actual }} {{ m.unidad_medida }}
-                    </span>
-                {% else %}
-                    {{ m.stock_actual }} {{ m.unidad_medida }}
-                {% endif %}
-            </td>
-
-            <td>{{ m.stock_minimo }}</td>
-
-            <td>${{ m.costo_unitario }}</td>
-
-            <td>
-
-                {% if session["rol"] == "jefe" %}
-
-                <a href="{{ url_for('inventarios.editar_material', id=m.id) }}"
-                   class="btn btn-sm btn-warning">
-                   Editar
-                </a>
-
-                <a href="{{ url_for('inventarios.eliminar_material', id=m.id) }}"
-                   class="btn btn-sm btn-danger">
-                   Eliminar
-                </a>
-
-                <a href="{{ url_for('inventarios.registrar_movimiento', material_id=m.id) }}"
-                   class="btn btn-sm btn-info">
-                   Movimiento
-                </a>
-
-                {% endif %}
-
-                <a href="{{ url_for('inventarios.historial_material', material_id=m.id) }}"
-                   class="btn btn-sm btn-dark">
-                   Historial
-                </a>
-
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var modalEliminar = document.getElementById('modalEliminarMaterialG');
+        if (modalEliminar) {
+            modalEliminar.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                var materialId = button.getAttribute('data-material-id');
+                var materialNombre = button.getAttribute('data-material-nombre');
+                
+                var modalTitle = modalEliminar.querySelector('#materialNombreEliminar');
+                modalTitle.textContent = materialNombre;
+                
+                var formEliminar = modalEliminar.querySelector('#formEliminarMaterial');
+                formEliminar.action = "{{ url_for('inventarios.eliminar_material', id=0) }}".replace('0', materialId);
+            });
+        }
+    });
+</script>
+{% endif %}
 
 {% endblock %}

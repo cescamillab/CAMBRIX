@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from app.utils import login_required
 from app.db import get_connection
 
@@ -123,7 +123,7 @@ def editar_material(id):
 # =========================
 # ELIMINAR MATERIAL (SOLO JEFE)
 # =========================
-@inventarios_bp.route("/eliminar/<int:id>")
+@inventarios_bp.route("/eliminar/<int:id>", methods=["POST"])
 @login_required
 def eliminar_material(id):
 
@@ -133,9 +133,23 @@ def eliminar_material(id):
     conexion = get_connection()
     cursor = conexion.cursor()
 
-    cursor.execute("DELETE FROM materiales WHERE id=%s", (id,))
-    conexion.commit()
-    conexion.close()
+    try:
+        # Primero eliminar registros relacionados en produccion_materiales
+        cursor.execute("DELETE FROM produccion_materiales WHERE material_id=%s", (id,))
+
+        # Luego eliminar movimientos de inventario relacionados
+        cursor.execute("DELETE FROM movimientos_inventario WHERE material_id=%s", (id,))
+
+        # Finalmente eliminar el material
+        cursor.execute("DELETE FROM materiales WHERE id=%s", (id,))
+
+        conexion.commit()
+        flash("Material eliminado correctamente.", "success")
+    except Exception as e:
+        conexion.rollback()
+        flash(f"Error al eliminar el material: {str(e)}", "danger")
+    finally:
+        conexion.close()
 
     return redirect(url_for("inventarios.listar_materiales"))
 

@@ -2,116 +2,242 @@
 
 {% block content %}
 
-<h2 class="mb-4">Dashboard</h2>
+<div class="navbar-top mb-4">
+    <h2 class="page-title">Bienvenido al Dashboard</h2>
+</div>
 
 {% if materiales_bajos %}
-
-<div class="alert alert-danger">
-
-    <h5>⚠ Materiales con stock bajo</h5>
-
-    <ul>
-
-        {% for m in materiales_bajos %}
-
-        <li>
-            {{ m.nombre }} :
-            {{ m.stock_actual }}
-            (mínimo {{ m.stock_minimo }})
-        </li>
-
-        {% endfor %}
-
-    </ul>
-
+<div class="custom-alert mb-4">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <div class="alert-content">
+        <h5>Materiales con stock crítico</h5>
+        <ul>
+            {% for m in materiales_bajos %}
+            <li><strong>{{ m.nombre }}</strong>: {{ m.stock_actual }} (mínimo {{ m.stock_minimo }})</li>
+            {% endfor %}
+        </ul>
+    </div>
 </div>
 {% endif %}
 
+<!-- KPIs Row -->
 <div class="row">
-
-    <div class="col-md-3">
-        <div class="card text-white bg-dark mb-3">
-            <div class="card-body">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card primary-card">
+            <div class="stat-details">
                 <h5>Total Pedidos</h5>
                 <h3>{{ total }}</h3>
             </div>
+            <div class="stat-icon">
+                <i class="bi bi-box2-fill"></i>
+            </div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card text-dark bg-warning mb-3">
-            <div class="card-body">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-details">
                 <h5>Pendientes</h5>
                 <h3>{{ pendientes }}</h3>
             </div>
+            <div class="stat-icon text-warning" style="background: rgba(255, 193, 7, 0.1);">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card text-white bg-primary mb-3">
-            <div class="card-body">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-details">
                 <h5>En Proceso</h5>
                 <h3>{{ en_proceso }}</h3>
             </div>
+            <div class="stat-icon text-cambri-blue" style="background: rgba(2, 158, 242, 0.1);">
+                <i class="bi bi-gear-fill"></i>
+            </div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card text-white bg-success mb-3">
-            <div class="card-body">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-details">
                 <h5>Terminados</h5>
                 <h3>{{ terminados }}</h3>
             </div>
+            <div class="stat-icon text-success" style="background: rgba(25, 135, 84, 0.1);">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
         </div>
     </div>
-
 </div>
 
-<div class="row mt-4">
+<!-- Financial Row -->
+<div class="row">
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
+        <div class="stat-card">
+            <div class="stat-details">
                 <h5>Total Facturado</h5>
-                <h3>${{ total_facturado }}</h3>
+                <h3>${{ '{:,.2f}'.format(total_facturado) }}</h3>
+            </div>
+            <div class="stat-icon text-success" style="background: rgba(25, 135, 84, 0.1);">
+                <i class="bi bi-cash-stack"></i>
             </div>
         </div>
     </div>
 
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5>Total Pendiente</h5>
-                <h3>${{ total_pendiente }}</h3>
+        <div class="stat-card">
+            <div class="stat-details">
+                <h5>Total Pendiente de Cobro</h5>
+                <h3>${{ '{:,.2f}'.format(total_pendiente) }}</h3>
+            </div>
+            <div class="stat-icon text-danger" style="background: rgba(220, 53, 69, 0.1);">
+                <i class="bi bi-wallet-fill"></i>
             </div>
         </div>
     </div>
 </div>
 
 <!-- ========================= -->
-<!-- GRÁFICAS -->
+<!-- GRÁFICAS PRINCIPALES -->
 <!-- ========================= -->
 
-<div class="row mt-5">
-
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5>Distribución de Estados</h5>
+<div class="row mt-2">
+    <div class="col-lg-5 col-md-12">
+        <div class="chart-container">
+            <h5>Distribución de Estados</h5>
+            <div class="chart-wrapper">
                 <canvas id="graficaEstados"></canvas>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5>Ingresos Mensuales</h5>
+    <div class="col-lg-7 col-md-12">
+        <div class="chart-container">
+            <h5>Evolución de Ingresos</h5>
+            <div class="chart-wrapper">
                 <canvas id="graficaIngresos"></canvas>
             </div>
         </div>
     </div>
-
 </div>
+
+{% if rol == 'jefe' %}
+<!-- ========================= -->
+<!-- NUEVAS MÉTRICAS Y TABLAS -->
+<!-- ========================= -->
+<div class="row mt-2">
+    <!-- Top Materiales Consumidos -->
+    <div class="col-lg-4 col-md-12">
+        <div class="chart-container">
+            <h5>Top 5 Materiales Usados</h5>
+            <div class="chart-wrapper">
+                <canvas id="graficaMateriales"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Clientes -->
+    <div class="col-lg-4 col-md-6">
+        <div class="chart-container" style="height: 100%;">
+            <h5>Mejores Clientes</h5>
+            <ul class="client-list mt-4">
+                {% for c in top_clientes %}
+                <li class="client-list-item">
+                    <div class="client-info">
+                        <div class="client-avatar">
+                            {{ c.nombre[0]|upper }}
+                        </div>
+                        <p class="client-name">{{ c.nombre }}</p>
+                    </div>
+                    <span class="client-value">${{ '{:,.2f}'.format(c.total_facturado) }}</span>
+                </li>
+                {% else %}
+                <li class="client-list-item text-muted">No hay datos suficientes.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Últimos Pedidos -->
+    <div class="col-lg-4 col-md-6">
+        <div class="chart-container" style="height: 100%;">
+            <h5>Últimos Pedidos</h5>
+            <div class="table-responsive mt-4">
+                <table class="table-custom">
+                    <tbody>
+                        {% for p in ultimos_pedidos %}
+                        <tr>
+                            <td>
+                                <strong>#{{ p.id }}</strong><br>
+                                <small class="text-muted">{{ p.cliente }}</small>
+                            </td>
+                            <td>${{ '{:,.2f}'.format(p.valor_total) }}</td>
+                            <td class="text-end">
+                                {% if p.estado == 'terminado' %}
+                                    <span class="badge badge-custom text-success" style="background: rgba(25,135,84,0.1);">Terminado</span>
+                                {% elif p.estado == 'en_proceso' %}
+                                    <span class="badge badge-custom text-cambri-blue" style="background: rgba(2,158,242,0.1);">En Proceso</span>
+                                {% elif p.estado == 'pendiente' %}
+                                    <span class="badge badge-custom text-warning" style="background: rgba(255,193,7,0.1);">Pendiente</span>
+                                {% else %}
+                                    <span class="badge badge-custom text-danger" style="background: rgba(220,53,69,0.1);">Cancelado</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-muted">No hay pedidos recientes.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<!-- Vista Empleado (Últimos Pedidos Propios) -->
+<div class="row mt-2">
+    <div class="col-md-12">
+        <div class="chart-container">
+            <h5>Mis Últimos Pedidos Asignados</h5>
+            <div class="table-responsive mt-3">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Valor</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in ultimos_pedidos %}
+                        <tr>
+                            <td><strong>#{{ p.id }}</strong></td>
+                            <td>{{ p.cliente }}</td>
+                            <td>${{ '{:,.2f}'.format(p.valor_total) }}</td>
+                            <td>
+                                {% if p.estado == 'terminado' %}
+                                    <span class="badge badge-custom text-success" style="background: rgba(25,135,84,0.1);">Terminado</span>
+                                {% elif p.estado == 'en_proceso' %}
+                                    <span class="badge badge-custom text-cambri-blue" style="background: rgba(2,158,242,0.1);">En Proceso</span>
+                                {% elif p.estado == 'pendiente' %}
+                                    <span class="badge badge-custom text-warning" style="background: rgba(255,193,7,0.1);">Pendiente</span>
+                                {% else %}
+                                    <span class="badge badge-custom text-danger" style="background: rgba(220,53,69,0.1);">Cancelado</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-muted">No tienes pedidos asignados recientemente.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- ========================= -->
 <!-- CHART JS -->
@@ -120,28 +246,48 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-
+    // Configuración global de fuentes para ChartJS
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = "#a3aed1";
+    
     // ====== DATOS DESDE FLASK ======
     const estadosData = {{ estados | tojson }};
     const ingresosData = {{ ingresos | tojson }};
 
     // ====== PROCESAR ESTADOS ======
-    const estadosLabels = estadosData.map(e => e.estado);
+    const estadosLabels = estadosData.map(e => e.estado.charAt(0).toUpperCase() + e.estado.slice(1).replace('_', ' '));
     const estadosValores = estadosData.map(e => e.total);
 
-    new Chart(document.getElementById('graficaEstados'), {
-        type: 'pie',
+    const ctxPie = document.getElementById('graficaEstados').getContext('2d');
+    new Chart(ctxPie, {
+        type: 'doughnut',
         data: {
             labels: estadosLabels,
             datasets: [{
                 data: estadosValores,
                 backgroundColor: [
-                    '#198754',
-                    '#ffc107',
-                    '#0d6efd',
-                    '#6c757d'
-                ]
+                    '#ffc107', // pendiente
+                    '#029EF2', // en proceso
+                    '#198754', // terminado
+                    '#dc3545'  // cancelado u otro
+                ],
+                borderWidth: 0,
+                hoverOffset: 4
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '75%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                    }
+                }
+            }
         }
     });
 
@@ -149,20 +295,119 @@
     const meses = ingresosData.map(i => i.mes);
     const valores = ingresosData.map(i => i.total_mes);
 
-    new Chart(document.getElementById('graficaIngresos'), {
+    const ctxLine = document.getElementById('graficaIngresos').getContext('2d');
+    
+    // Crear gradiente para el área
+    let gradient = ctxLine.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(2, 158, 242, 0.5)');
+    gradient.addColorStop(1, 'rgba(2, 158, 242, 0.0)');
+
+    new Chart(ctxLine, {
         type: 'line',
         data: {
             labels: meses,
             datasets: [{
-                label: 'Ingresos',
+                label: 'Ingresos ($)',
                 data: valores,
-                borderColor: '#0d6efd',
-                backgroundColor: 'rgba(13,110,253,0.2)',
+                borderColor: '#029EF2',
+                backgroundColor: gradient,
+                borderWidth: 3,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#029EF2',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
                 fill: true,
-                tension: 0.3
+                tension: 0.4 // Suaviza la curva
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: '#2b3674',
+                    titleFont: { size: 14, family: "'Inter', sans-serif" },
+                    bodyFont: { size: 14, family: "'Inter', sans-serif" },
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    }
+                },
+                y: {
+                    grid: {
+                        color: '#e0e5f2',
+                        drawBorder: false,
+                        borderDash: [5, 5]
+                    },
+                    ticks: {
+                        callback: function(value, index, values) {
+                            if (value >= 1000) {
+                                return '$' + (value / 1000) + 'k';
+                            }
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
         }
     });
+
+    {% if rol == 'jefe' %}
+    // ====== PROCESAR MATERIALES ======
+    const topMaterialesData = {{ top_materiales | tojson }};
+    const matLabels = topMaterialesData.map(m => m.nombre);
+    const matValores = topMaterialesData.map(m => m.total_usado);
+
+    const ctxBar = document.getElementById('graficaMateriales').getContext('2d');
+    new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: matLabels,
+            datasets: [{
+                label: 'Cantidad Usada',
+                data: matValores,
+                backgroundColor: 'rgba(2, 158, 242, 0.8)',
+                borderRadius: 5,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            indexAxis: 'y', // Hace la gráfica horizontal
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: '#e0e5f2',
+                        drawBorder: false,
+                        borderDash: [5, 5]
+                    }
+                },
+                y: {
+                    grid: { display: false, drawBorder: false }
+                }
+            }
+        }
+    });
+    {% endif %}
 
 </script>
 
