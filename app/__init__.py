@@ -1,18 +1,18 @@
 from flask import Flask
-from .config import Config
+from app.core.config import Config
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
     # Registrar Blueprints
-    from .auth.routes import auth_bp
-    from .dashboard.routes import dashboard_bp
-    from .pedidos.routes import pedidos_bp
-    from .inventarios.routes import inventarios_bp
-    from .produccion.routes import produccion_bp
-    from .reportes.routes import reportes_bp
-    from .empleados.routes import empleados_bp
+    from app.presentation.blueprints.auth.routes import auth_bp
+    from app.presentation.blueprints.dashboard.routes import dashboard_bp
+    from app.presentation.blueprints.pedidos.routes import pedidos_bp
+    from app.presentation.blueprints.inventarios.routes import inventarios_bp
+    from app.presentation.blueprints.produccion.routes import produccion_bp
+    from app.presentation.blueprints.reportes.routes import reportes_bp
+    from app.presentation.blueprints.empleados.routes import empleados_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
