@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary"><i class="bi bi-box-seam"></i> Reporte de Inventario</h2>
+        <div>
+            <button class="btn btn-outline-success me-2" onclick="exportarExcel()"><i class="bi bi-file-earmark-excel"></i> Exportar Excel</button>
+            <button class="btn btn-outline-danger" onclick="exportarPDF()"><i class="bi bi-file-earmark-pdf"></i> Exportar PDF</button>
+        </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="inventarioTable" class="table table-striped table-hover align-middle" style="width:100%">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Código</th>
+                            <th>Insumo / Material</th>
+                            <th>Stock Actual</th>
+                            <th>Stock Mínimo</th>
+                            <th>Estado</th>
+                            <th>Valor Unitario ($)</th>
+                            <th>Valor Total ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+let tablaInv;
+$(document).ready(function() {
+    tablaInv = $('#inventarioTable').DataTable({
+        language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+        columns: [
+            { data: 'codigo' },
+            { data: 'nombre' },
+            { data: 'saldo_final' },
+            { data: 'stock_minimo' },
+            { 
+                data: null,
+                render: function(data) {
+                    if (data.saldo_final <= data.stock_minimo) {
+                        return '<span class="badge bg-danger">Bajo Stock</span>';
+                    }
+                    return '<span class="badge bg-success">OK</span>';
+                }
+            },
+            { data: 'valor_unitario', render: $.fn.dataTable.render.number(',', '.', 2, '$') },
+            { data: 'valor_total', render: $.fn.dataTable.render.number(',', '.', 2, '$') }
+        ]
+    });
+    cargarDatos();
+});
+
+function cargarDatos() {
+    $.ajax({
+        url: "{{ url_for('reportes.api_inventario') }}",
+        success: function(res) {
+            tablaInv.clear();
+            tablaInv.rows.add(res.data);
+            tablaInv.draw();
+        }
+    });
+}
+
+function exportarExcel() {
+    window.location.href = "{{ url_for('reportes.reporte_inventario_excel') }}";
+}
+function exportarPDF() {
+    window.location.href = "{{ url_for('reportes.reporte_inventario_pdf') }}";
+}
+</script>
+{% endblock %}

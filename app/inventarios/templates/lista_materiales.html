@@ -19,9 +19,48 @@
 </div>
 {% endif %}
 
-<div class="stat-card p-0 overflow-hidden">
+<!-- Filtros de Inventario -->
+<div class="stat-card mb-4 p-3 d-flex align-items-center justify-content-between">
+    <div class="d-flex gap-3 align-items-center w-100">
+        <form id="formFiltros" class="d-flex gap-3 align-items-center w-100 m-0">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-funnel-fill text-cambri-blue"></i>
+                <span class="fw-bold text-secondary small text-uppercase">Filtrar por:</span>
+            </div>
+            
+            <select name="stock_status" class="form-select w-auto" onchange="document.getElementById('formFiltros').submit();" style="border-radius: 10px; cursor: pointer;">
+                <option value="" {% if not stock_status %}selected{% endif %}>Todos los estados</option>
+                <option value="critico" {% if stock_status == 'critico' %}selected{% endif %}>Stock Crítico / Mínimo</option>
+                <option value="normal" {% if stock_status == 'normal' %}selected{% endif %}>Stock Normal</option>
+            </select>
+            
+            <select name="categoria" class="form-select w-auto" onchange="document.getElementById('formFiltros').submit();" style="border-radius: 10px; cursor: pointer;">
+                <option value="" {% if not categoria_seleccionada %}selected{% endif %}>Todas las categorías</option>
+                {% for c in categorias %}
+                <option value="{{ c }}" {% if categoria_seleccionada == c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+            
+            {% if stock_status or categoria_seleccionada %}
+                <a href="{{ url_for('inventarios.listar_materiales') }}" class="btn btn-sm btn-outline-secondary ms-auto" style="border-radius: 8px;">
+                    <i class="bi bi-x-circle me-1"></i> Limpiar filtros
+                </a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="stat-card p-0 overflow-hidden d-block">
     <div class="table-responsive">
-        <table class="table-custom mb-0">
+        <table class="table-custom mb-0 w-100">
+            <colgroup>
+                <col style="width: 25%;">
+                <col style="width: 15%;">
+                <col style="width: 15%;">
+                <col style="width: 15%;">
+                <col style="width: 15%;">
+                <col style="width: 15%;">
+            </colgroup>
             <thead>
                 <tr>
                     <th class="ps-4">Nombre del Material</th>

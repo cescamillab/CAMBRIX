@@ -19,15 +19,17 @@
 
 <!-- Filtros -->
 <div class="stat-card mb-4" style="padding: 20px;">
-    <form method="GET" action="{{ url_for('pedidos.listar_pedidos') }}" class="row g-3 align-items-end">
+    <form method="GET" action="{{ url_for('pedidos.listar_pedidos') }}" class="row g-3 align-items-end" id="formFiltrosPedidos">
+        <!-- Búsqueda de Cliente -->
         <div class="col-md-3">
             <label class="form-label text-secondary fw-bold small"><i class="bi bi-search"></i> Buscar Cliente</label>
-            <input type="text" name="busqueda" class="form-control" placeholder="Ej. Juan Pérez..." value="{{ busqueda }}">
+            <input type="text" name="busqueda" id="inputBusqueda" class="form-control" placeholder="Ej. Juan Pérez..." value="{{ busqueda }}">
         </div>
 
+        <!-- Estado -->
         <div class="col-md-3">
             <label class="form-label text-secondary fw-bold small"><i class="bi bi-filter-circle"></i> Estado</label>
-            <select name="estado" class="form-select">
+            <select name="estado" class="form-select filter-trigger">
                 <option value="">Todos los estados</option>
                 <option value="pendiente" {% if estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
                 <option value="en_proceso" {% if estado == 'en_proceso' %}selected{% endif %}>En Proceso</option>
@@ -35,10 +37,11 @@
             </select>
         </div>
 
+        <!-- Responsable (Solo jefe) -->
         {% if session.get("rol") == "jefe" %}
         <div class="col-md-3">
             <label class="form-label text-secondary fw-bold small"><i class="bi bi-person-badge"></i> Responsable</label>
-            <select name="responsable" class="form-select">
+            <select name="responsable" class="form-select filter-trigger">
                 <option value="">Todos los responsables</option>
                 {% for emp in empleados %}
                     <option value="{{ emp.id }}" {% if responsable == emp.id|string %}selected{% endif %}>
@@ -49,12 +52,67 @@
         </div>
         {% endif %}
 
-        <div class="col-md-auto d-flex gap-2">
-            <button type="submit" class="btn text-white bg-cambri-blue px-3"><i class="bi bi-funnel-fill"></i> Filtrar</button>
-            <a href="{{ url_for('pedidos.listar_pedidos') }}" class="btn btn-outline-secondary px-3"><i class="bi bi-x-circle"></i> Limpiar</a>
+
+
+        <!-- Ordenar por Fecha -->
+        <div class="col-md-3">
+            <label class="form-label text-secondary fw-bold small"><i class="bi bi-calendar-event"></i> Ordenar por Entrega</label>
+            <select name="orden_fecha" class="form-select filter-trigger">
+                <option value="">Por defecto</option>
+                <option value="asc" {% if orden_fecha == 'asc' %}selected{% endif %}>Más antigua primero</option>
+                <option value="desc" {% if orden_fecha == 'desc' %}selected{% endif %}>Más reciente primero</option>
+            </select>
+        </div>
+
+        <!-- Fechas (Inicio / Fin) -->
+        <div class="col-md-3">
+            <label class="form-label text-secondary fw-bold small"><i class="bi bi-calendar"></i> Entrega Desde</label>
+            <input type="date" name="fecha_inicio" class="form-control filter-trigger" value="{{ fecha_inicio }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label text-secondary fw-bold small"><i class="bi bi-calendar"></i> Entrega Hasta</label>
+            <input type="date" name="fecha_fin" class="form-control filter-trigger" value="{{ fecha_fin }}">
+        </div>
+
+        <!-- Botones (Solo Limpiar) -->
+        <div class="col-md-3 d-flex gap-2">
+            <a href="{{ url_for('pedidos.listar_pedidos') }}" class="btn btn-outline-secondary px-3 w-100"><i class="bi bi-x-circle"></i> Limpiar Filtros</a>
         </div>
     </form>
 </div>
+
+<!-- Script para Auto-submit y Debounce -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('formFiltrosPedidos');
+        const searchInput = document.getElementById('inputBusqueda');
+        const filterTriggers = document.querySelectorAll('.filter-trigger');
+        let debounceTimer;
+
+        // Auto-submit en select/date changes
+        filterTriggers.forEach(trigger => {
+            trigger.addEventListener('change', function() {
+                form.submit();
+            });
+        });
+
+        // Debounce para el input de búsqueda
+        if (searchInput) {
+            // Mover el cursor al final si hay texto
+            const val = searchInput.value;
+            searchInput.focus();
+            searchInput.value = '';
+            searchInput.value = val;
+
+            searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function() {
+                    form.submit();
+                }, 500); // 500ms debounce
+            });
+        }
+    });
+</script>
 
 <!-- Tabla de Pedidos -->
 <div class="stat-card p-0 overflow-hidden">
@@ -67,7 +125,7 @@
                     <th>Estado</th>
                     <th>Responsable</th>
                     <th>Entrega</th>
-                    <th>Saldo</th>
+                    <th>Valor Total</th>
                     <th class="text-center pe-4">Acciones</th>
                 </tr>
             </thead>
@@ -102,7 +160,7 @@
                         {% endif %}
                     </td>
                     <td class="small">{{ pedido.fecha_entrega }}</td>
-                    <td class="fw-bold text-success">${{ '{:,.2f}'.format(pedido.saldo) }}</td>
+                    <td class="fw-bold text-success">${{ '{:,.2f}'.format(pedido.valor_total) }}</td>
                     <td class="text-center pe-4">
                         <div class="btn-group shadow-sm" role="group">
                             <!-- Ver Detalle -->

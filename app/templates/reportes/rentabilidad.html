@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary"><i class="bi bi-graph-up-arrow"></i> Reporte de Rentabilidad</h2>
+        <div>
+            <button class="btn btn-outline-success" onclick="exportarExcel()"><i class="bi bi-file-earmark-excel"></i> Exportar Excel</button>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form id="filtrosForm" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label">Fecha Inicio</label>
+                    <input type="date" class="form-control" id="fecha_inicio">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Fecha Fin</label>
+                    <input type="date" class="form-control" id="fecha_fin">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-primary w-100" onclick="cargarDatos()">Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="rentabilidadTable" class="table table-striped table-hover align-middle" style="width:100%">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Pedido ID</th>
+                            <th>Cliente</th>
+                            <th>Ingreso Neto</th>
+                            <th>Costo Mat. Prima</th>
+                            <th>Costo Operativo (Est)</th>
+                            <th>Margen Bruto ($)</th>
+                            <th>Margen (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="2" class="text-end">Totales:</th>
+                            <th id="totIngreso"></th>
+                            <th id="totMP"></th>
+                            <th id="totOp"></th>
+                            <th id="totMargen"></th>
+                            <th id="totPorc"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+let tablaRent;
+$(document).ready(function() {
+    tablaRent = $('#rentabilidadTable').DataTable({
+        language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+        columns: [
+            { data: 'pedido_id' },
+            { data: 'cliente' },
+            { data: 'ingreso_neto', render: $.fn.dataTable.render.number(',', '.', 2, '$') },
+            { data: 'costo_materia_prima', render: $.fn.dataTable.render.number(',', '.', 2, '$') },
+            { data: 'costo_operativo_estimado', render: $.fn.dataTable.render.number(',', '.', 2, '$') },
+            { 
+                data: 'margen_bruto', 
+                render: function(data) {
+                    let c = data < 0 ? 'text-danger' : 'text-success';
+                    return `<span class="${c} fw-bold">$${parseFloat(data).toLocaleString('en-US',{minimumFractionDigits:2})}</span>`;
+                }
+            },
+            { 
+                data: 'margen_porcentaje', 
+                render: function(data) {
+                    let c = data < 20 ? 'text-danger' : 'text-success';
+                    return `<span class="${c} fw-bold">${data}%</span>`;
+                }
+            }
+        ]
+    });
+    cargarDatos();
+});
+
+function cargarDatos() {
+    let fi = $('#fecha_inicio').val();
+    let ff = $('#fecha_fin').val();
+    $.ajax({
+        url: "{{ url_for('reportes.api_rentabilidad') }}",
+        data: { fecha_inicio: fi, fecha_fin: ff },
+        success: function(res) {
+            tablaRent.clear();
+            tablaRent.rows.add(res.data);
+            tablaRent.draw();
+            
+            // Calculo totales footer
+            let tIngreso = 0, tMP = 0, tOp = 0, tMargen = 0;
+            res.data.forEach(d => {
+                tIngreso += parseFloat(d.ingreso_neto || 0);
+                tMP += parseFloat(d.costo_materia_prima || 0);
+                tOp += parseFloat(d.costo_operativo_estimado || 0);
+                tMargen += parseFloat(d.margen_bruto || 0);
+            });
+            let pMargen = tIngreso > 0 ? (tMargen/tIngreso)*100 : 0;
+            
+            $('#totIngreso').text('$' + tIngreso.toLocaleString('en-US',{minimumFractionDigits:2}));
+            $('#totMP').text('$' + tMP.toLocaleString('en-US',{minimumFractionDigits:2}));
+            $('#totOp').text('$' + tOp.toLocaleString('en-US',{minimumFractionDigits:2}));
+            $('#totMargen').text('$' + tMargen.toLocaleString('en-US',{minimumFractionDigits:2}));
+            $('#totPorc').text(pMargen.toFixed(2) + '%');
+        }
+    });
+}
+
+function exportarExcel() {
+    let fi = $('#fecha_inicio').val();
+    let ff = $('#fecha_fin').val();
+    window.location.href = `{{ url_for('reportes.reporte_rentabilidad_excel') }}?fecha_inicio=${fi}&fecha_fin=${ff}`;
+}
+</script>
+{% endblock %}

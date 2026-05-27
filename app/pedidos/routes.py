@@ -1,8 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, abort
 from functools import wraps
 from app.utils import login_required
-from app.db import get_connection
-
+from app.services.pedido_service import PedidoService
 
 pedidos_bp = Blueprint(
     "pedidos",
@@ -27,61 +26,17 @@ def role_required(role):
 @pedidos_bp.route("/")
 @login_required
 def listar_pedidos():
-
-    connection = get_connection()
-    cursor = connection.cursor(dictionary=True)
-
-    # Obtener filtros desde la URL
     busqueda = request.args.get("busqueda", "")
     estado = request.args.get("estado", "")
     responsable = request.args.get("responsable","")
+    fecha_inicio = request.args.get("fecha_inicio", "")
+    fecha_fin = request.args.get("fecha_fin", "")
+    orden_id = request.args.get("orden_id", "")
+    orden_fecha = request.args.get("orden_fecha", "")
+    rol = session.get("rol")
+    user_id = session.get("user_id")
 
-    # Query base
-    query = """
-        SELECT pedidos.*, clientes.nombre AS cliente_nombre,
-        usuarios.nombre AS responsable_nombre,
-        (pedidos.valor_total - pedidos.anticipo) AS saldo
-        FROM pedidos
-        JOIN clientes ON pedidos.cliente_id = clientes.id
-        LEFT JOIN usuarios ON pedidos.responsable_id = usuarios.id
-        WHERE 1=1
-    """
-
-    params = []
-
-    # Si no es jefe, solo ve sus pedidos
-    if session.get("rol") != "jefe":
-        query += " AND pedidos.responsable_id = %s"
-        params.append(session.get("user_id"))
-
-    # Filtro por búsqueda de cliente
-    if busqueda:
-        query += " AND clientes.nombre LIKE %s"
-        params.append(f"%{busqueda}%")
-
-    # Filtro por estado
-    if estado:
-        query += " AND pedidos.estado = %s"
-        params.append(estado)
-
-    # Filtro por responsable (solo jefe puede usarlo)
-    if responsable and session.get("rol") == "jefe":
-        query += " AND pedidos.responsable_id = %s"
-        params.append(responsable)
-
-    query += " ORDER BY pedidos.fecha_creacion DESC"
-
-    cursor.execute(query, params)
-    pedidos = cursor.fetchall()
-
-    # Obtener lista de empleados para el filtro
-    empleados = []
-    if session.get("rol") == "jefe":
-        cursor.execute("SELECT id, nombre FROM usuarios WHERE rol = 'empleado'")
-        empleados = cursor.fetchall()
-
-    cursor.close()
-    connection.close()
+    pedidos, empleados = PedidoService.get_filtered(rol, user_id, busqueda, estado, responsable, fecha_inicio, fecha_fin, orden_id, orden_fecha)
 
     return render_template(
         "lista_pedidos.html",
@@ -89,6 +44,10 @@ def listar_pedidos():
         busqueda=busqueda,
         estado=estado,
         responsable=responsable,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        orden_id=orden_id,
+        orden_fecha=orden_fecha,
         empleados=empleados
     )
 
@@ -97,107 +56,36 @@ def listar_pedidos():
 @pedidos_bp.route("/crear", methods=["GET", "POST"])
 @login_required
 @role_required("jefe")
-
 def crear_pedido():
-
-    connection = get_connection()
-    cursor = connection.cursor(dictionary=True)
-
-    # Traer clientes existentes
-    cursor.execute("SELECT * FROM clientes")
-    clientes = cursor.fetchall()
+    clientes, empleados = PedidoService.get_create_data()
 
     if request.method == "POST":
-
         tipo_cliente = request.form["tipo_cliente"]
-
-        # Si selecciona cliente existente
-        if tipo_cliente == "existente":
-            cliente_id = request.form["cliente_existente"]
-
-        # Si crea cliente nuevo
-        else:
-            nombre = request.form["nombre"]
-            telefono = request.form["telefono"]
-            correo = request.form["correo"]
-
-            cursor.execute(
-                "INSERT INTO clientes (nombre, telefono, correo) VALUES (%s, %s, %s)",
-                (nombre, telefono, correo)
-            )
-            connection.commit()
-
-            cliente_id = cursor.lastrowid
-
+        cliente_existente = request.form.get("cliente_existente")
+        nombre = request.form.get("nombre")
+        telefono = request.form.get("telefono")
+        correo = request.form.get("correo")
         descripcion = request.form["descripcion"]
         fecha_entrega = request.form["fecha_entrega"]
         valor_total = request.form["valor_total"]
         anticipo = request.form["anticipo"]
         responsable_id = request.form["responsable_id"]
 
-
-        cursor.execute("""
-            INSERT INTO pedidos 
-            (cliente_id, descripcion, fecha_entrega, valor_total, anticipo, responsable_id)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (cliente_id, descripcion, fecha_entrega, valor_total, anticipo, responsable_id))
-
-        connection.commit()
-
-        cursor.close()
-        connection.close()
-
+        PedidoService.create_pedido(tipo_cliente, cliente_existente, nombre, telefono, correo, descripcion, fecha_entrega, valor_total, anticipo, responsable_id)
         return redirect(url_for("pedidos.listar_pedidos"))
-
-    # Traer empleados
-    cursor.execute("SELECT id, username FROM usuarios WHERE rol = 'empleado'")
-    empleados = cursor.fetchall()
-
-    cursor.close()
-    connection.close()
 
     return render_template("crear_pedidos.html", clientes=clientes, empleados=empleados)
 
 @pedidos_bp.route("/actualizar_estado/<int:pedido_id>", methods=["POST"])
 @login_required
 def actualizar_estado(pedido_id):
-
     nuevo_estado = request.form["estado"]
+    rol = session.get("rol")
+    user_id = session.get("user_id")
 
-    connection = get_connection()
-    cursor = connection.cursor(dictionary=True)
-
-    # Verificar que el pedido existe
-    cursor.execute("SELECT * FROM pedidos WHERE id = %s", (pedido_id,))
-    pedido = cursor.fetchone()
-
-    if not pedido:
-        cursor.close()
-        connection.close()
-        abort(404)
-
-    # Si ya está terminado → bloquear
-    if pedido["estado"] == "terminado":
-        cursor.close()
-        connection.close()
-        abort(400)
-
-    # Si es empleado, solo puede cambiar los suyos
-    if session.get("rol") == "empleado":
-        if pedido["responsable_id"] != session.get("user_id"):
-            cursor.close()
-            connection.close()
-            abort(403)
-
-    # Actualizar estado
-    cursor.execute(
-        "UPDATE pedidos SET estado = %s WHERE id = %s",
-        (nuevo_estado, pedido_id)
-    )
-    connection.commit()
-
-    cursor.close()
-    connection.close()
+    success, msg, status_code = PedidoService.actualizar_estado(pedido_id, nuevo_estado, rol, user_id)
+    if not success:
+        abort(status_code)
 
     return redirect(url_for("pedidos.listar_pedidos"))
 
@@ -206,51 +94,12 @@ def actualizar_estado(pedido_id):
 @pedidos_bp.route("/<int:pedido_id>")
 @login_required
 def detalle_pedido(pedido_id):
+    rol = session.get("rol")
+    user_id = session.get("user_id")
 
-    connection = get_connection()
-    cursor = connection.cursor(dictionary=True)
-
-    # Obtener pedido
-    cursor.execute("""
-        SELECT 
-            pedidos.*, 
-            clientes.nombre AS cliente_nombre,
-            clientes.telefono,
-            clientes.correo,
-            usuarios.username AS responsable_nombre,
-            (pedidos.valor_total - pedidos.anticipo) AS saldo
-        FROM pedidos
-        JOIN clientes ON pedidos.cliente_id = clientes.id
-        LEFT JOIN usuarios ON pedidos.responsable_id = usuarios.id
-        WHERE pedidos.id = %s
-    """, (pedido_id,))
-
-    pedido = cursor.fetchone()
-
-    if not pedido:
-        cursor.close()
-        connection.close()
-        abort(404)
-
-    # Control de permisos
-    if session.get("rol") == "empleado":
-        if pedido["responsable_id"] != session.get("user_id"):
-            cursor.close()
-            connection.close()
-            abort(403)
-
-    # Obtener materiales usados en producción
-    cursor.execute("""
-        SELECT pm.*, m.nombre
-        FROM produccion_materiales pm
-        JOIN materiales m ON pm.material_id = m.id
-        WHERE pm.pedido_id = %s
-    """, (pedido_id,))
-
-    produccion = cursor.fetchall()
-
-    cursor.close()
-    connection.close()
+    success, pedido, produccion, status_code = PedidoService.get_detail(pedido_id, rol, user_id)
+    if not success:
+        abort(status_code)
 
     return render_template(
         "detalle_pedido.html",
@@ -262,35 +111,11 @@ def detalle_pedido(pedido_id):
 @login_required
 @role_required("jefe")
 def editar_pedido(pedido_id):
-
-    connection = get_connection()
-    cursor = connection.cursor(dictionary=True)
-
-    # Traer pedido
-    cursor.execute("SELECT * FROM pedidos WHERE id = %s", (pedido_id,))
-    pedido = cursor.fetchone()
-
-    if not pedido:
-        cursor.close()
-        connection.close()
-        abort(404)
-
-    # No permitir editar si está terminado
-    if pedido["estado"] == "terminado":
-        cursor.close()
-        connection.close()
-        abort(400)
-
-    # Traer clientes
-    cursor.execute("SELECT * FROM clientes")
-    clientes = cursor.fetchall()
-
-    # Traer empleados
-    cursor.execute("SELECT id, username FROM usuarios WHERE rol = 'empleado'")
-    empleados = cursor.fetchall()
+    success, pedido, clientes, empleados, status_code = PedidoService.get_edit_data(pedido_id)
+    if not success:
+        abort(status_code)
 
     if request.method == "POST":
-
         cliente_id = request.form["cliente_id"]
         descripcion = request.form["descripcion"]
         fecha_entrega = request.form["fecha_entrega"]
@@ -298,34 +123,8 @@ def editar_pedido(pedido_id):
         anticipo = request.form["anticipo"]
         responsable_id = request.form["responsable_id"]
 
-        cursor.execute("""
-            UPDATE pedidos
-            SET cliente_id=%s,
-                descripcion=%s,
-                fecha_entrega=%s,
-                valor_total=%s,
-                anticipo=%s,
-                responsable_id=%s
-            WHERE id=%s
-        """, (
-            cliente_id,
-            descripcion,
-            fecha_entrega,
-            valor_total,
-            anticipo,
-            responsable_id,
-            pedido_id
-        ))
-
-        connection.commit()
-
-        cursor.close()
-        connection.close()
-
+        PedidoService.update_pedido(pedido_id, cliente_id, descripcion, fecha_entrega, valor_total, anticipo, responsable_id)
         return redirect(url_for("pedidos.detalle_pedido", pedido_id=pedido_id))
-
-    cursor.close()
-    connection.close()
 
     return render_template(
         "editar_pedido.html",
@@ -338,14 +137,6 @@ def editar_pedido(pedido_id):
 @login_required
 @role_required("jefe")
 def eliminar_pedido(pedido_id):
-
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    cursor.execute("DELETE FROM pedidos WHERE id = %s", (pedido_id,))
-    connection.commit()
-
-    cursor.close()
-    connection.close()
-
+    PedidoService.delete_pedido(pedido_id)
     return redirect(url_for("pedidos.listar_pedidos"))
+

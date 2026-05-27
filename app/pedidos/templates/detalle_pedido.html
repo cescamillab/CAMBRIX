@@ -22,12 +22,12 @@
     <!-- INFORMACIÓN PRINCIPAL (Izquierda) -->
     <div class="col-lg-8">
         
-        <div class="stat-card mb-4">
+        <div class="stat-card d-block mb-4">
             <h5 class="text-cambri-blue border-bottom pb-2 mb-3"><i class="bi bi-card-text"></i> Descripción del Pedido</h5>
             <p class="fs-5">{{ pedido.descripcion }}</p>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card d-block">
             <h5 class="text-cambri-blue border-bottom pb-2 mb-3"><i class="bi bi-tools"></i> Materiales Usados en Producción</h5>
             
             {% if produccion %}
@@ -74,7 +74,7 @@
     <div class="col-lg-4">
         
         <!-- Cliente -->
-        <div class="stat-card mb-4">
+        <div class="stat-card d-block mb-4">
             <h6 class="text-secondary fw-bold text-uppercase mb-3"><i class="bi bi-person-circle"></i> Datos del Cliente</h6>
             <h4 class="fw-bold mb-1">{{ pedido.cliente_nombre }}</h4>
             <div class="d-flex align-items-center text-muted mb-2">
@@ -86,7 +86,7 @@
         </div>
 
         <!-- Fechas y Responsable -->
-        <div class="stat-card mb-4">
+        <div class="stat-card d-block mb-4">
             <h6 class="text-secondary fw-bold text-uppercase mb-3"><i class="bi bi-info-circle-fill"></i> Detalles Operativos</h6>
             
             <div class="mb-3">
@@ -106,7 +106,7 @@
         </div>
 
         <!-- Resumen Financiero -->
-        <div class="stat-card bg-cambri-blue text-white shadow-hover" style="border: none;">
+        <div class="stat-card d-block bg-cambri-blue text-white shadow-hover" style="border: none;">
             <h6 class="fw-bold text-uppercase mb-3 opacity-75"><i class="bi bi-wallet2"></i> Resumen Financiero</h6>
             
             <div class="d-flex justify-content-between mb-2">
@@ -121,7 +121,11 @@
             
             <div class="d-flex justify-content-between mt-3">
                 <span class="fs-5">SALDO PENDIENTE:</span>
-                <span class="fs-4 fw-bold">${{ '{:,.2f}'.format(pedido.saldo) }}</span>
+                {% if pedido.estado == 'terminado' %}
+                    <span class="fs-4 fw-bold">$0.00</span>
+                {% else %}
+                    <span class="fs-4 fw-bold">${{ '{:,.2f}'.format(pedido.saldo) }}</span>
+                {% endif %}
             </div>
         </div>
 

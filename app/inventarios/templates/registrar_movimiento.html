@@ -7,12 +7,17 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-6">
-        <div class="stat-card shadow-lg" style="border-radius: 20px; padding: 40px;">
+        <div class="stat-card shadow-lg d-block" style="border-radius: 20px; padding: 40px;">
             
-            <div class="text-center mb-4">
-                <h4 class="fw-bold mb-1">{{ material.nombre }}</h4>
-                <div class="badge badge-custom text-cambri-blue" style="background: rgba(2, 158, 242, 0.1); font-size: 1rem;">
-                    Stock Actual: <strong>{{ material.stock_actual }} {{ material.unidad_medida }}</strong>
+            <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                <div class="bg-light text-cambri-blue d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; border-radius: 12px; font-size: 1.5rem;">
+                    <i class="bi bi-box-seam-fill"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-1">{{ material.nombre }}</h4>
+                    <div class="text-secondary small fw-bold">
+                        Stock Actual: <span class="text-cambri-blue">{{ material.stock_actual }} {{ material.unidad_medida }}</span>
+                    </div>
                 </div>
             </div>
 

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
-from app.db import get_connection
+from app.services.auth_service import AuthService
 
 auth_bp = Blueprint(
     "auth",
@@ -18,24 +18,16 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        connection = get_connection()
-        cursor = connection.cursor(dictionary=True)
+        result = AuthService.login(username, password)
 
-        query = "SELECT * FROM usuarios WHERE username = %s AND password = %s"
-        cursor.execute(query, (username, password))
-        user = cursor.fetchone()
-
-        cursor.close()
-        connection.close()
-
-        if user:
-            session["user_id"] = user["id"]
-            session["username"] = user["username"]
-            session["rol"] = user["rol"]
+        if result["success"]:
+            session["user_id"] = result["user_id"]
+            session["username"] = result["username"]
+            session["rol"] = result["rol"]
 
             return redirect(url_for("dashboard.home"))
         else:
-            error = "Usuario o contraseña incorrectos"
+            error = result["error"]
 
     return render_template("login.html", error=error)
 
@@ -44,3 +36,4 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("auth.login"))
+

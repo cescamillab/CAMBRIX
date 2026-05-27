@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-from app.db import get_connection
+from app.services.empleado_service import EmpleadoService
 
 empleados_bp = Blueprint(
     "empleados",
@@ -16,13 +16,7 @@ def listar_empleados():
         flash("No tienes permisos para acceder a esta sección.", "danger")
         return redirect(url_for("dashboard.home"))
         
-    connection = get_connection()
-    cursor = connection.cursor(dictionary=True)
-    cursor.execute("SELECT id, nombre, username, rol FROM usuarios")
-    empleados = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    
+    empleados = EmpleadoService.get_all_empleados()
     return render_template("listar_empleados.html", empleados=empleados)
 
 @empleados_bp.route("/empleados/crear", methods=["POST"])
@@ -35,19 +29,8 @@ def crear_empleado():
     password = request.form.get("password")
     rol = request.form.get("rol")
     
-    if nombre and username and password and rol:
-        try:
-            connection = get_connection()
-            cursor = connection.cursor()
-            query = "INSERT INTO usuarios (nombre, username, password, rol) VALUES (%s, %s, %s, %s)"
-            cursor.execute(query, (nombre, username, password, rol))
-            connection.commit()
-            flash("Empleado creado exitosamente.", "success")
-        except Exception as e:
-            flash(f"Error al crear empleado: {e}", "danger")
-        finally:
-            if 'cursor' in locals(): cursor.close()
-            if 'connection' in locals(): connection.close()
+    success, msg = EmpleadoService.create_empleado(nombre, username, password, rol)
+    flash(msg, "success" if success else "danger")
             
     return redirect(url_for("empleados.listar_empleados"))
 
@@ -61,25 +44,8 @@ def editar_empleado(id):
     password = request.form.get("password")
     rol = request.form.get("rol")
     
-    if nombre and username and rol:
-        try:
-            connection = get_connection()
-            cursor = connection.cursor()
-            
-            if password: # Si se proporciona contraseña, actualizarla
-                query = "UPDATE usuarios SET nombre=%s, username=%s, password=%s, rol=%s WHERE id=%s"
-                cursor.execute(query, (nombre, username, password, rol, id))
-            else:
-                query = "UPDATE usuarios SET nombre=%s, username=%s, rol=%s WHERE id=%s"
-                cursor.execute(query, (nombre, username, rol, id))
-                
-            connection.commit()
-            flash("Empleado actualizado exitosamente.", "success")
-        except Exception as e:
-            flash(f"Error al actualizar empleado: {e}", "danger")
-        finally:
-            if 'cursor' in locals(): cursor.close()
-            if 'connection' in locals(): connection.close()
+    success, msg = EmpleadoService.update_empleado(id, nombre, username, rol, password)
+    flash(msg, "success" if success else "danger")
             
     return redirect(url_for("empleados.listar_empleados"))
 
@@ -88,21 +54,8 @@ def eliminar_empleado(id):
     if not es_jefe():
         return redirect(url_for("dashboard.home"))
         
-    # Prevenir que el jefe se elimine a sí mismo
-    if id == session.get("user_id"):
-        flash("No puedes eliminar tu propia cuenta.", "warning")
-        return redirect(url_for("empleados.listar_empleados"))
-        
-    try:
-        connection = get_connection()
-        cursor = connection.cursor()
-        cursor.execute("DELETE FROM usuarios WHERE id=%s", (id,))
-        connection.commit()
-        flash("Empleado eliminado exitosamente.", "success")
-    except Exception as e:
-        flash(f"Error al eliminar empleado: {e}", "danger")
-    finally:
-        if 'cursor' in locals(): cursor.close()
-        if 'connection' in locals(): connection.close()
+    success, msg = EmpleadoService.delete_empleado(id, session.get("user_id"))
+    flash(msg, "success" if success else ("warning" if "propia" in msg else "danger"))
         
     return redirect(url_for("empleados.listar_empleados"))
+

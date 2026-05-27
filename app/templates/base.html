@@ -39,10 +39,40 @@
                     <i class="bi bi-archive-fill"></i> Inventarios
                 </a>
             </li>
-            <li class="{% if request.endpoint == 'reportes.ver_reportes' %}active{% endif %}">
-                <a href="{{ url_for('reportes.ver_reportes') }}">
+            <!-- Submenú de Reportes -->
+            <li class="{% if request.blueprint == 'reportes' %}active{% endif %}">
+                <a href="#reportesSubmenu" data-bs-toggle="collapse" aria-expanded="{% if request.blueprint == 'reportes' %}true{% else %}false{% endif %}" class="dropdown-toggle">
                     <i class="bi bi-bar-chart-fill"></i> Reportes
                 </a>
+                <ul class="collapse list-unstyled {% if request.blueprint == 'reportes' %}show{% endif %}" id="reportesSubmenu">
+                    <li>
+                        <a href="{{ url_for('reportes.pedidos_view') }}" class="{% if request.endpoint == 'reportes.pedidos_view' %}active{% endif %}">
+                            <i class="bi bi-circle"></i> Ventas y Pedidos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('reportes.produccion_view') }}" class="{% if request.endpoint == 'reportes.produccion_view' %}active{% endif %}">
+                            <i class="bi bi-circle"></i> Prod. y Eficiencia
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('reportes.inventario_view') }}" class="{% if request.endpoint == 'reportes.inventario_view' %}active{% endif %}">
+                            <i class="bi bi-circle"></i> Rotación Inventario
+                        </a>
+                    </li>
+                    {% if session.get('rol') == 'jefe' %}
+                    <li>
+                        <a href="{{ url_for('reportes.rentabilidad_view') }}" class="{% if request.endpoint == 'reportes.rentabilidad_view' %}active{% endif %}">
+                            <i class="bi bi-circle"></i> Rentabilidad
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('reportes.trazabilidad_view') }}" class="{% if request.endpoint == 'reportes.trazabilidad_view' %}active{% endif %}">
+                            <i class="bi bi-circle"></i> Trazabilidad
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
             </li>
             {% if session.get('rol') == 'jefe' %}
             <li class="{% if request.blueprint == 'empleados' %}active{% endif %}">
